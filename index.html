@@ -8,7 +8,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">Welcome to Version 0.0.0.0.1 👀</h3>
+	<h3 style="font-family: Montserrat;">Welcome to Version 0.1 👀</h3>
 	<svg height="800" width="800" class="mainGrid"/>
 	<script>
 
@@ -19,7 +19,7 @@
 		let tileSize = 30;
 		let selectedToggle = "";
 		let grid = [];
-		let isClickDisabled = true;
+		let isDragging = true;
 
 		let wallColor = "#A7333F";
 		let doorColor = "#FFB959";
@@ -67,7 +67,7 @@
 						.duration(100)
 						.style("fill", toggleColor[d]);
 
-					isClickDisabled = false;
+					isDragging = false;
 
 				});
 
@@ -91,7 +91,7 @@
 				.style("fill", whiteColor)
 				.on("click", function() {
 					d3.selectAll(".cell").style("fill", whiteColor);
-					isClickDisabled = false;
+					isDragging = false;
 					selectedToggle = "";
 					d3.selectAll(".toggle")
 						.transition()
@@ -117,7 +117,7 @@
 				.on("click", function() {
 					exportFile(createFinalJson());
 					isNewThief = false;
-					isClickDisabled = true;
+					isDragging = true;
 					selectedToggle = "";
 					tempThievesList = [];
 				});
@@ -144,9 +144,10 @@
 			var gridSvg = d3.select(".mainGrid");
 
 			gridSvg.on("click", function() {
-				isClickDisabled = !isClickDisabled;
+				isDragging = !isDragging;
 
-				if (!isClickDisabled && selectedToggle == "thief") {
+				// 
+				if (!isDragging && selectedToggle == "thief") {
 					isNewThief = true;
 				}
 			})
@@ -166,7 +167,7 @@
 				.style("stroke", greyColor)
 				.style("stroke-width", 2)
 				.on("mousemove", function(d) {
-					if (!isClickDisabled && selectedToggle != "") {
+					if (!isDragging && selectedToggle != "") {
 						var element = d3.select("#cell_"+d.x+"_"+d.y);
 
 						// if the square are white, add to grid
@@ -226,6 +227,7 @@
 	  	}
 
 	  	function exportFile(defaultJson) {
+	  		console.log(defaultJson);
 	  		var pp = document.createElement('a');
                 pp.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(defaultJson)));
                 pp.setAttribute('download', "thenightwatch.json");
