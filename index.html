@@ -5,10 +5,11 @@
 	<script src="https://d3js.org/d3.v5.min.js"></script>
 	<script src="https://d3js.org/d3-drag.v1.min.js"></script>
 	<link href="https://fonts.googleapis.com/css?family=Inconsolata&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">Welcome to Version 0.1 👀</h3>
+	<h3 style="font-family: Montserrat;">Welcome to Version 1.0 👀</h3>
 	<svg height="800" width="800" class="mainGrid"/>
 	<script>
 
@@ -19,7 +20,7 @@
 		let tileSize = 30;
 		let selectedToggle = "";
 		let grid = [];
-		let isDragging = true;
+		let isDragging = false;
 
 		let wallColor = "#A7333F";
 		let doorColor = "#FFB959";
@@ -42,6 +43,7 @@
 
 			var gridSvg = d3.select(".mainGrid");
 
+			// add button types 
 			gridSvg.selectAll(".toggle")
 	   			.data(keys)
 	   			.enter()
@@ -51,6 +53,7 @@
 				.attr("x", function(d, i) {
 					return startingX+130*i;
 				}).attr("y", 50)
+				.attr("rx", 15)
 				.attr("width", 100)
 				.attr("height", 50)
 				.style("stroke", "black")
@@ -77,16 +80,18 @@
 					.attr("x", (startingX+130*i)+50)
 					.attr("y", 80)
 					.style("text-anchor", "middle")
-					.style("font-family", "Inconsolata")
+					.style("font-family", "Lato")
 					.style("font-color", "black")
 					.text(keys[i]);
 			}
 
+			// add reset button
 			gridSvg.append("rect")
 				.attr("x", 10)
 				.attr("y", 50)
 				.attr("width", 100)
 				.attr("height", 50)
+				.attr("rx", 15)
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
@@ -98,35 +103,35 @@
 						.duration(50)
 						.style("fill", whiteColor);
 				});
-
 			gridSvg.append("text")
 				.attr("x", 60)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
-				.style("font-family", "Inconsolata")
+				.style("font-family", "Lato")
 				.style("font-color", "black")
 				.text("reset");
 
+			// add export button
 			gridSvg.append("rect")
 				.attr("x", 690)
 				.attr("y", 50)
 				.attr("width", 100)
 				.attr("height", 50)
+				.attr("rx", 15)
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
 					exportFile(createFinalJson());
 					isNewThief = false;
-					isDragging = true;
+					isDragging = false;
 					selectedToggle = "";
 					tempThievesList = [];
 				});
-
 			gridSvg.append("text")
 				.attr("x", 740)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
-				.style("font-family", "Inconsolata")
+				.style("font-family", "Lato")
 				.style("font-color", "black")
 				.text("export");
 		}
@@ -143,15 +148,6 @@
 		function drawGrid() {
 			var gridSvg = d3.select(".mainGrid");
 
-			gridSvg.on("click", function() {
-				isDragging = !isDragging;
-
-				// 
-				if (!isDragging && selectedToggle == "thief") {
-					isNewThief = true;
-				}
-			})
-
 			var startingX = (svgWidth - numGridWidth*tileSize)/2;
 
 			console.log(grid);
@@ -167,7 +163,7 @@
 				.style("stroke", greyColor)
 				.style("stroke-width", 2)
 				.on("mousemove", function(d) {
-					if (!isDragging && selectedToggle != "") {
+					if (isDragging && selectedToggle != "") {
 						var element = d3.select("#cell_"+d.x+"_"+d.y);
 
 						// if the square are white, add to grid
@@ -176,12 +172,35 @@
 						}
 
 						// adding thief's starting point
-						if (isNewThief && selectedToggle == "thief") {
-							tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});
-							isNewThief = false;
-						}
+						// if (isNewThief && selectedToggle == "thief") {
+						// 	tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});
+						// 	isNewThief = false;
+						// }
 					}
-				});
+				}).on("click", function(d) {
+					console.log(d);
+					isDragging = !isDragging;
+					var element = d3.select("#cell_"+d.x+"_"+d.y);
+					var tempX = startingX+tileSize*Number(d.x);
+					var tempY = 150+tileSize*Number(d.y);
+
+					console.log(tempX + " " + tempY);
+					if (isDragging && selectedToggle == "thief") {
+						//draw border for starting position of thief
+						gridSvg.append("path")
+							.style("stroke", "black")
+							.style("stroke-width", 2)
+							.style("fill", "none")
+							.attr("d", "M" + tempX + " " + tempY 
+								+ "L" + (tempX+tileSize) + " "+ tempY 
+								+ "L" + (tempX+tileSize) + " " + (tempY+tileSize)
+								+ "L" + (tempX) + " " + (tempY+tileSize)
+								+ "L" + tempX + " " + tempY);
+
+						tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});
+							
+					}
+			});
 
 		}
 
