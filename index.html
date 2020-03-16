@@ -102,6 +102,7 @@
 						.transition()
 						.duration(50)
 						.style("fill", whiteColor);
+					d3.selectAll(".grid_path").remove();
 				});
 			gridSvg.append("text")
 				.attr("x", 60)
@@ -188,6 +189,7 @@
 					if (isDragging && selectedToggle == "thief") {
 						//draw border for starting position of thief
 						gridSvg.append("path")
+							.attr("class", "grid_path")
 							.style("stroke", "black")
 							.style("stroke-width", 2)
 							.style("fill", "none")
@@ -199,6 +201,8 @@
 
 						tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});
 							
+					} else {
+						d3.selectAll(".grid_path").remove();
 					}
 			});
 
