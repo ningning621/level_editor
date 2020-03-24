@@ -41,17 +41,27 @@
 		let thiefColor = "#82AAB5";
 		let whiteColor = "#ffffff";
 		let greyColor = "#cdcdcd";
+		let paintColor = "#D4A0A7";
+
+		let wallRgb = "rgb(167, 51, 63)";
+		let doorRgb = "rgb(255, 185, 89)";
+		let thiefRgb = "rgb(130, 170, 181)";
+		let paintRgb = "rgb(212, 160, 167)";
+		let whiteRgb = "rgb(255, 255, 255)";
 
 		let isNewThief = false;
 		let tempThievesList = [];
 		let wallList = [];
 		let doorList = [];
 		let thiefList = [];
+		let paintingList = [];
+		let undoStack = [];
 
-		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor};
+
+		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor};
 
 		function createToggleButton() {
-			var keys = ["wall", "door", "thief"];
+			var keys = ["wall", "door", "thief", "painting"];
 			var buttonSize = 100;
 			var spaceBetweenButtons = 30;
 			var startingButtonX = (svgWidth - (buttonSize*keys.length + spaceBetweenButtons*(keys.length-1)))/2;
@@ -118,6 +128,8 @@
 						.duration(50)
 						.style("fill", whiteColor);
 					d3.selectAll(".grid_path").remove();
+
+					fillOuterWalls();
 				});
 			gridSvg.append("text")
 				.attr("x", startingX+buttonSize/2)
@@ -144,6 +156,7 @@
 					wallList = [];
 					doorList = [];
 					thiefList = [];
+					paintingList = [];
 				});
 			gridSvg.append("text")
 				.attr("x", svgWidth-startingX-buttonSize/2)
@@ -201,11 +214,17 @@
 					if (isDragging && selectedToggle != "") {
 						var element = d3.select("#cell_"+d.x+"_"+d.y);
 
-						// if the square are white, add to grid
-						if (element.style("fill") == "rgb(255, 255, 255)") {
+						if (selectedToggle == "door" && (element.style("fill") == wallRgb)) {
+							element.style("fill", toggleColor[selectedToggle]);
+							addCoordToList(d, selectedToggle);
+						} else if (selectedToggle == "thief" && element.style("fill") == thiefRgb) {
+							element.style("fill", toggleColor[selectedToggle]);
+							addCoordToList(d, selectedToggle);
+						} else if (element.style("fill") == whiteRgb) {
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle);
 						}
+						
 					}
 				}).on("click", function(d) {
 					isDragging = !isDragging;
@@ -216,6 +235,7 @@
 					console.log(tempX + " " + tempY);
 					if (isDragging && selectedToggle != "") {
 						addNewList(selectedToggle);
+						undoStack.push(selectedToggle);
 					}
 					if (isDragging && selectedToggle == "thief") {
 						//draw border for starting position of thief
@@ -228,41 +248,46 @@
 								+ "L" + (tempX+tileSize) + " "+ tempY 
 								+ "L" + (tempX+tileSize) + " " + (tempY+tileSize)
 								+ "L" + (tempX) + " " + (tempY+tileSize)
-								+ "L" + tempX + " " + tempY);
-
-						// tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});	
+								+ "L" + tempX + " " + tempY);	
 					} else {
 						d3.selectAll(".grid_path").remove();
 					}
 			});
 
+			fillOuterWalls();
 		}
 
 		function deleteLastItem() {
+			var lastItem = undoStack.pop();
 			var tempList = [];
-			if (selectedToggle == "wall") {
+			// get last item in list
+			if (lastItem == "wall") {
 				tempList = wallList[wallList.length-1];
-			} else if (selectedToggle == "door") {
+			} else if (lastItem == "door") {
 				tempList = doorList[doorList.length-1];
-				// doorList.pop()
-			} else if (selectedToggle == "thief") {
+			} else if (lastItem == "thief") {
 				tempList = thiefList[thiefList.length-1]; 
-				// thiefList.pop();
+			} else if (lastItem == "painting") {
+				tempList = paintingList[paintingList.length-1]; 
 			}
-			console.log(tempList);
 
+			// change the color of last path to white
 			for (var i = 0; i < tempList.length; i++) {
 				d3.select("#cell_" + tempList[i].x + "_" + tempList[i].y)
 					.style("fill", whiteColor);
 			}
 
-			if (selectedToggle == "wall") {
+			// delete last item in list
+			if (lastItem == "wall") {
 				wallList.pop();
-			} else if (selectedToggle == "door") {
+			} else if (lastItem == "door") {
 				doorList.pop()
-			} else if (selectedToggle == "thief") {
+			} else if (lastItem == "thief") {
 				thiefList.pop();
+			} else if (lastItem == "painting") {
+				paintingList.pop();
 			}
+
 		}
 
 		function addNewList(selectedToggle) {
@@ -272,6 +297,8 @@
 				doorList.push([]);
 			} else if (selectedToggle == "thief") {
 				thiefList.push([]); 
+			} else if (selectedToggle == "painting") {
+				paintingList.push([]); 
 			}
 		}
 
@@ -285,31 +312,37 @@
 			} else if (selectedToggle == "thief") {
 				var tempObj = {"x": d.x, "y": d.y};
 				thiefList[thiefList.length-1].push(tempObj);
+			} else if (selectedToggle == "painting") {
+				var tempObj = {"x": d.x, "y": d.y};
+				paintingList[paintingList.length-1].push(tempObj);
 			}
 		}
 
 		function dragstarted(d) {
 			var element = d3.select("#cell_"+d.x+"_"+d.y);
-		    d3.select(element).style("fill", wallColor);
+		    d3.select(element).style("fill", toggleColor[selectedToggle]);
 		}
 
 
 	  	function dragged(d) {
-	    	d3.select(d).attr("fill", wallColor);
+	    	d3.select(d).attr("fill", toggleColor[selectedToggle]);
 	    	console.log(d.x + " " + d.y);
 	  	}
 
 	  	function createFinalJson() {
-	  		// console.log(tempThievesList);
 	  		console.log(wallList);
 	  		console.log(doorList);
 	  		console.log(thiefList);
 	  		var defaultJson = {
-	  			"version": "0.1",
-	  			"walls": [],
-	  			"thieves": tempThievesList,
+	  			"version": "1.1",
+	  			"walls": wallList,
+	  			"thieves": thiefList,
+	  			"doors": doorList,
+	  			"canvasWidth": gameWidth,
+	  			"canvasHeight": gameHeight,
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
+	  			"tileSize": gameTileSize,
 	  			"numGuards": 3
 	  		};
 
@@ -352,6 +385,24 @@
 				.transition()
 				.duration(50)
 				.style("fill", whiteColor);
+	  	}
+
+	  	function fillOuterWalls() {
+	  		for (var i = 0; i < numGridWidth; i++) {
+	  			d3.select("#cell_" + i + "_" + 0)
+	  				.style("fill", wallColor);
+
+	  			d3.select("#cell_" + i + "_" + (numGridHeight-1))
+	  				.style("fill", wallColor);
+	  		}
+
+	  		for (var i = 0; i < numGridHeight; i++) {
+	  			d3.select("#cell_" + 0 + "_" + i)
+	  				.style("fill", wallColor);
+
+	  			d3.select("#cell_" + (numGridWidth-1) + "_" + i)
+	  				.style("fill", wallColor);
+	  		}
 	  	}
 
 	  	function setDimensions() {
