@@ -10,17 +10,31 @@
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
 	<h3 style="font-family: Montserrat;">Welcome to Version 1.0 👀</h3>
-	<svg height="800" width="800" class="mainGrid"/>
+	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50px">
+		<label style="margin-right: 20px;" for="width">Width: </label>
+		<input value="1280" style="border-radius: 10px" type="number" id="width"><br><br>
+		<label style="margin-left: 40px; margin-right: 20px;" for="height">Height: </label>
+		<input value="720" style="border-radius: 10px" type="number" id="height"><br><br>
+		<label style="margin-left: 40px; margin-right: 20px;" for="tile">Tile Size: </label>
+		<input value="30" style="border-radius: 10px" type="number" id="tile"><br><br>
+	</div>
+	<p style="font-family: Lato;"><b>Note:</b> Please don't input values that will force the svg to overfill. If you do, the web app will crash :( <br/>Also, don't change the tile size unless you <i>really</i> have to. </p>
+	<svg height="900" width="1200" class="mainGrid"/>
 	<script>
 
-		let svgHeight = 800;
-		let svgWidth = 800;
-		let numGridWidth = 24;
-		let numGridHeight = 18;
-		let tileSize = 30;
+		let svgHeight = 900;
+		let svgWidth = 1200;
+		let gameWidth = 1280;
+		let gameHeight = 720;
+		let gameTileSize = 30;
+		let numGridWidth = Math.floor(gameWidth/gameTileSize);
+		let numGridHeight = gameHeight/gameTileSize;
+		let tileSize = 25;
 		let selectedToggle = "";
 		let grid = [];
 		let isDragging = false;
+
+		let startingX = (svgWidth - numGridWidth*tileSize)/2;
 
 		let wallColor = "#A7333F";
 		let doorColor = "#FFB959";
@@ -31,15 +45,13 @@
 		let isNewThief = false;
 		let tempThievesList = [];
 
-
 		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor};
-
 
 		function createToggleButton() {
 			var keys = ["wall", "door", "thief"];
 			var buttonSize = 100;
 			var spaceBetweenButtons = 30;
-			var startingX = (svgHeight-100*keys.length-30*(keys.length-1))/2;
+			var startingButtonX = (svgWidth - (buttonSize*keys.length + spaceBetweenButtons*(keys.length-1)))/2;
 
 			var gridSvg = d3.select(".mainGrid");
 
@@ -51,7 +63,7 @@
 				.attr("class", "toggle")
 				.attr("id", function(d) {return "toggle_"+d})
 				.attr("x", function(d, i) {
-					return startingX+130*i;
+					return startingButtonX+130*i;
 				}).attr("y", 50)
 				.attr("rx", 15)
 				.attr("width", 100)
@@ -77,7 +89,7 @@
 
 			for (var i = 0; i < keys.length; i++) {
 				gridSvg.append("text")
-					.attr("x", (startingX+130*i)+50)
+					.attr("x", (startingButtonX+130*i)+50)
 					.attr("y", 80)
 					.style("text-anchor", "middle")
 					.style("font-family", "Lato")
@@ -87,7 +99,7 @@
 
 			// add reset button
 			gridSvg.append("rect")
-				.attr("x", 10)
+				.attr("x", startingX)
 				.attr("y", 50)
 				.attr("width", 100)
 				.attr("height", 50)
@@ -105,7 +117,7 @@
 					d3.selectAll(".grid_path").remove();
 				});
 			gridSvg.append("text")
-				.attr("x", 60)
+				.attr("x", startingX+buttonSize/2)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -114,7 +126,7 @@
 
 			// add export button
 			gridSvg.append("rect")
-				.attr("x", 690)
+				.attr("x", svgWidth-startingX-buttonSize)
 				.attr("y", 50)
 				.attr("width", 100)
 				.attr("height", 50)
@@ -129,7 +141,7 @@
 					tempThievesList = [];
 				});
 			gridSvg.append("text")
-				.attr("x", 740)
+				.attr("x", svgWidth-startingX-buttonSize/2)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -148,10 +160,7 @@
 
 		function drawGrid() {
 			var gridSvg = d3.select(".mainGrid");
-
-			var startingX = (svgWidth - numGridWidth*tileSize)/2;
-
-			console.log(grid);
+			
 			gridSvg.selectAll(".cell").data(grid).enter()
 				.append("rect")
 				.attr("class", "cell")
@@ -171,15 +180,8 @@
 						if (element.style("fill") == "rgb(255, 255, 255)") {
 							element.style("fill", toggleColor[selectedToggle]);
 						}
-
-						// adding thief's starting point
-						// if (isNewThief && selectedToggle == "thief") {
-						// 	tempThievesList.push({"x": d.x, "y": numGridHeight-d.y});
-						// 	isNewThief = false;
-						// }
 					}
 				}).on("click", function(d) {
-					console.log(d);
 					isDragging = !isDragging;
 					var element = d3.select("#cell_"+d.x+"_"+d.y);
 					var tempX = startingX+tileSize*Number(d.x);
@@ -209,7 +211,6 @@
 		}
 
 		function dragstarted(d) {
-			console.log(d);
 			var element = d3.select("#cell_"+d.x+"_"+d.y);
 		    d3.select(element).style("fill", wallColor);
 		}
@@ -236,7 +237,7 @@
 	  		for (var i = 0; i < numGridWidth; i++) {
 	  			for (var j = 0; j < numGridHeight; j++) {
 	  				var element = d3.select("#cell_"+i+"_"+j);
-	  				console.log(element.style("fill"));
+	  				// console.log(element.style("fill"));
 
 	  				// walls
 	  				if (element.style("fill") == "rgb(167, 51, 63)") {
@@ -257,9 +258,57 @@
                 pp.click();
 	  	}
 
+	  	function reset() {
+	  		d3.select(".mainGrid").selectAll(".cell").remove();
+	  		selectedToggle = "";
+			grid = [];
+			isDragging = false;
+			isNewThief = false;
+			tempThievesList = [];
+
+			d3.selectAll(".toggle")
+				.transition()
+				.duration(50)
+				.style("fill", whiteColor);
+	  	}
+
+	  	function setDimensions() {
+	  		d3.select("#width")
+	  			.on("input", function() {
+	  				gameWidth = this.value;
+	  				numGridWidth = Math.floor(this.value/gameTileSize);
+	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
+	  			reset();
+	  			createGridDS();
+	  			drawGrid();
+	  		});
+
+	  		d3.select("#height")
+	  			.on("input", function() {
+	  				gameHeight = this.value;
+	  				numGridHeight =  Math.floor(this.value/gameTileSize);
+	  			reset();
+	  			createGridDS();
+	  			drawGrid();
+	  		});
+
+	  		d3.select("#tile")
+	  			.on("input", function() {
+	  				gameTileSize = this.value;
+	  				numGridWidth =  Math.floor(gameWidth/gameTileSize);
+	  				numGridHeight =  Math.floor(gameHeight/gameTileSize);
+	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
+	  			reset();
+	  			window.setTimeout(createGridDS(), 5000);
+	  			drawGrid();
+	  		});
+
+	  	}
+
 	  	createGridDS();
 		createToggleButton();
 		drawGrid();
+		setDimensions();
 		
 	</script>
 </body>
