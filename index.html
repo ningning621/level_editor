@@ -18,12 +18,21 @@
 		<label style="margin-left: 40px; margin-right: 20px;" for="tile">Tile Size: </label>
 		<input value="30" style="border-radius: 10px" type="number" id="tile"><br><br>
 	</div>
-	<p style="font-family: Lato;"><b>Note:</b> Please don't input values that will force the svg to overfill. If you do, the web app will crash :( <br/>Also, don't change the tile size unless you <i>really</i> have to. </p>
-	<svg height="900" width="1200" class="mainGrid"/>
+	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
+		<label style="margin-right: 20px;" for="guards">Num of Guards: </label>
+		<input value="0" style="border-radius: 10px" type="number" id="guards"><br><br>
+		<label style="margin-left: 40px; margin-right: 20px;" for="traps">Num of Traps: </label>
+		<input value="0" style="border-radius: 10px" type="number" id="traps"><br><br>
+	</div>
+	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
+	<br/>1. Please don't input values that will force the svg to overfill. If you do, the web app will crash :( 
+	<br/>2. Don't change the tile size unless you <i>really</i> have to. 
+	<br/>3. Draw the paths carefully so that there are no skips on the grid - coordinates are only recorded when the tile is colored.</p>
+	<svg height="900" width="1100" class="mainGrid"/>
 	<script>
 
 		let svgHeight = 900;
-		let svgWidth = 1200;
+		let svgWidth = 1100;
 		let gameWidth = 1280;
 		let gameHeight = 720;
 		let gameTileSize = 30;
@@ -339,6 +348,7 @@
 	  		console.log(wallList);
 	  		console.log(doorList);
 	  		console.log(thiefList);
+	  		console.log(document.getElementById("guards").value);
 	  		var defaultJson = {
 	  			"version": "1.3",
 	  			"walls": wallList,
@@ -349,7 +359,8 @@
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
-	  			"numGuards": 3
+	  			"numGuards": document.getElementById("guards").value,
+	  			"numTraps": document.getElementById("traps").value
 	  		};
 
 	  		// getting wall and door values 
