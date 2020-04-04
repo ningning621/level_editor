@@ -73,6 +73,7 @@
 		let paintingList = [];
 		let statueList = [];
 		let undoStack = [];
+		let coordMap = {};
 
 
 		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor, "statue": statueColor};
@@ -155,7 +156,7 @@
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
-					reset();
+					resetClicked();
 				});
 			gridSvg.append("text")
 				.attr("x", startingX+(buttonSize-10)/2)
@@ -165,7 +166,7 @@
 				.style("font-color", "black")
 				.text("reset")
 				.on("click", function() {
-					reset();
+					resetClicked();
 				});
 
 			// add export button
@@ -202,6 +203,7 @@
 				.style("fill", whiteColor)
 				.on("click", function() {
 					deleteLastItem();
+					console.log(coordMap);
 				});
 			gridSvg.append("text")
 				.attr("x", startingX+(buttonSize-10)/2)
@@ -247,7 +249,6 @@
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
-					console.log("click 1");
 					hideAllThieves();
 				});
 			gridSvg.append("text")
@@ -258,7 +259,6 @@
 				.style("font-color", "black")
 				.text("hide thieves")
 				.on("click", function() {
-					console.log("click 1");
 					hideAllThieves();
 				});
 		}
@@ -293,18 +293,19 @@
 						// doors can be drawn on walls
 						if (selectedToggle == "door" && (element.style("fill") == wallRgb)) {
 							element.style("fill", toggleColor[selectedToggle]);
-							addCoordToList(d, selectedToggle);
+							addCoordToList(d, selectedToggle, toggleColor[selectedToggle]);
 						} 
 						// thief's paths can be drawn on other thieves' paths
 						else if (selectedToggle == "thief" && element.style("fill") != wallRgb && element.style("fill") != doorRgb && element.style("fill") != paintRgb && element.style("fill") != statueRgb) {
 							var thiefCount = thiefList.length;
-							element.style("fill", d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85)));
-							addCoordToList(d, selectedToggle);
+							var color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
+							element.style("fill", color);
+							addCoordToList(d, selectedToggle, color);
 						} 
-						// anything can be drawn on white
+						// everything else can be drawn on white
 						else if (element.style("fill") == whiteRgb && selectedToggle != "door") {
 							element.style("fill", toggleColor[selectedToggle]);
-							addCoordToList(d, selectedToggle);
+							addCoordToList(d, selectedToggle, toggleColor[selectedToggle]);
 						}
 						
 					}
@@ -314,12 +315,19 @@
 					var tempX = startingX+tileSize*Number(d.x);
 					var tempY = 150+tileSize*Number(d.y);
 
-					console.log(tempX + " " + tempY);
+					// console.log(tempX + " " + tempY);
 
 					if (isDragging && selectedToggle != "") {
 						// create new item in respective list
 						addNewList(selectedToggle);
 						undoStack.push(selectedToggle);
+
+						var color = toggleColor[selectedToggle];
+						if (selectedToggle == "thief") {
+							var thiefCount = thiefList.length;
+							color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
+						}
+						addCoordToList(d, selectedToggle, color);
 					}
 					if (isDragging && selectedToggle == "thief") {
 						//draw border for starting position of thief
@@ -359,8 +367,18 @@
 
 			// change the color of last path to white
 			for (var i = 0; i < tempList.length; i++) {
-				d3.select("#cell_" + tempList[i].x + "_" + tempList[i].y)
-					.style("fill", whiteColor);
+				var key = tempList[i].x + "_" + tempList[i].y;
+				coordMap[key].shift();
+
+				if (coordMap[key].length == 0) {
+					delete coordMap[key];
+					d3.select("#cell_" + key)
+						.style("fill", whiteColor);
+				} else {
+					var color = coordMap[key][0];
+					d3.select("#cell_" + key)
+						.style("fill", color);
+				}
 			}
 
 			// delete last item in list
@@ -392,29 +410,34 @@
 			}
 		}
 
-		function addCoordToList(d, selectedToggle) {
+		function addCoordToList(d, selectedToggle, color) {
 			var tempObj = {"x": d.x, "y": d.y};
 
 
 			if (selectedToggle == "thief") {
 				if (!checkDuplicateCoord(thiefList, tempObj)) {
 					thiefList[thiefList.length-1].push(tempObj);
+					addToCoordMap(d.x, d.y, color);
 				}
 			} else if (selectedToggle == "painting") {
 				if (!checkDuplicateCoord(paintingList, tempObj)) {
 					paintingList[paintingList.length-1].push(tempObj);
+					addToCoordMap(d.x, d.y, color);
 				}
 			} else if (selectedToggle == "statue") {
 				if (!checkDuplicateCoord(statueList, tempObj)) {
 					statueList[statueList.length-1].push(tempObj);
+					addToCoordMap(d.x, d.y, color);
 				}
 			} else if (selectedToggle == "wall") {
 				if (!checkDuplicateCoord(wallList, tempObj)) {
 					wallList[wallList.length-1].push(tempObj);
+					addToCoordMap(d.x, d.y, color);
 				}
 			} else if (selectedToggle == "door") {
 				if (!checkDuplicateCoord(doorList, tempObj)) {
 					doorList[doorList.length-1].push(tempObj);
+					addToCoordMap(d.x, d.y, color);
 				}
 			}
 		}
@@ -489,22 +512,10 @@
                 pp.click();
 	  	}
 
-	  	function reset() {
+	  	function removeMainGrid() {
 	  		d3.select(".mainGrid").selectAll(".cell").remove();
-	  		selectedToggle = "";
-			grid = [];
-			isDragging = false;
-			isNewThief = false;
-			wallList = [];
-			doorList = [];
-			thiefList = [];
-			paintingList = [];
-			statueList = [];
-
-			d3.selectAll(".toggle")
-				.transition()
-				.duration(50)
-				.style("fill", whiteColor);
+	  		grid = [];
+	  		resetClicked();
 	  	}
 
 	  	function fillOuterWalls() {
@@ -514,6 +525,9 @@
 
 	  			d3.select("#cell_" + i + "_" + (numGridHeight-1))
 	  				.style("fill", wallColor);
+
+	  			addToCoordMap(i, 0, wallRgb);
+	  			addToCoordMap(i, (numGridHeight-1), wallRgb);
 	  		}
 
 	  		for (var i = 0; i < numGridHeight; i++) {
@@ -522,6 +536,9 @@
 
 	  			d3.select("#cell_" + (numGridWidth-1) + "_" + i)
 	  				.style("fill", wallColor);
+
+	  			addToCoordMap(0, i, wallRgb);
+	  			addToCoordMap((numGridHeight-1), i, wallRgb);
 	  		}
 	  	}
 
@@ -531,7 +548,7 @@
 	  				gameWidth = this.value;
 	  				numGridWidth = Math.floor(this.value/gameTileSize);
 	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
-		  			reset();
+		  			removeMainGrid();
 		  			createGridDS();
 		  			drawGrid();
 		  		})
@@ -548,7 +565,7 @@
 	  			.on("input", function() {
 	  				gameHeight = this.value;
 	  				numGridHeight =  Math.floor(this.value/gameTileSize);
-		  			reset();
+		  			removeMainGrid();
 		  			createGridDS();
 		  			drawGrid();
 		  		})
@@ -567,7 +584,7 @@
 	  				numGridWidth =  Math.floor(gameWidth/gameTileSize);
 	  				numGridHeight =  Math.floor(gameHeight/gameTileSize);
 	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
-		  			reset();
+		  			removeMainGrid();
 		  			window.setTimeout(createGridDS(), 5000);
 		  			drawGrid();
 	  			})
@@ -644,10 +661,18 @@
 	  		}
 	  	}
 
-	  	function reset() {
+	  	function resetClicked() {
 			d3.selectAll(".cell").style("fill", whiteColor);
 			isDragging = false;
 			selectedToggle = "";
+			isNewThief = false;
+			wallList = [];
+			doorList = [];
+			thiefList = [];
+			paintingList = [];
+			statueList = [];
+			coordMap = {};
+
 			d3.selectAll(".toggle")
 				.transition()
 				.duration(50)
@@ -659,14 +684,16 @@
 
 	  	function exportClicked() {
 	  		exportFile(createFinalJson());
-			isNewThief = false;
-			isDragging = false;
-			selectedToggle = "";
-			wallList = [];
-			doorList = [];
-			thiefList = [];
-			paintingList = [];
-			statueList = [];
+	  	}
+
+	  	function addToCoordMap(x, y, color) {
+	  		let tempKey = x + "_" + y;
+	  		
+			if (!coordMap[tempKey]) {
+				coordMap[tempKey] = [color];
+			} else {
+				coordMap[tempKey].unshift(color);
+			}
 	  	}
 
 	  	createGridDS();
