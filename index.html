@@ -9,8 +9,12 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">Welcome to Version 1.4 🎉🎉</h3>
-	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50px">
+	<h3 style="font-family: Montserrat;">Welcome to Version 1.5 🎉🎉</h3>
+	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
+		<label style="margin-right: 20px;" for="level_num">Level: </label>
+		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
+	</div>
+	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60px">
 		<label style="margin-right: 20px;" for="width">Width: </label>
 		<input value="1280" style="border-radius: 10px" type="number" id="width"><br><br>
 		<label style="margin-left: 40px; margin-right: 20px;" for="height">Height: </label>
@@ -18,7 +22,7 @@
 		<label style="margin-left: 40px; margin-right: 20px;" for="tile">Tile Size: </label>
 		<input value="30" style="border-radius: 10px" type="number" id="tile"><br><br>
 	</div>
-	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
+	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60; margin-bottom: 60">
 		<label style="margin-right: 20px;" for="guards">Num of Guards: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="guards"><br><br>
 		<label style="margin-left: 40px; margin-right: 20px;" for="traps">Num of Traps: </label>
@@ -27,7 +31,7 @@
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
 	<br/>1. Please don't input values that will force the svg to overfill. If you do, the web app will crash :( 
 	<br/>2. Don't change the tile size unless you <i>really</i> have to. 
-	<br/>3. Coordinates are recorded in real life so it's important to draw the paths without skips on the grid.
+	<br/>3. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
 	<br/>4. Tiles change back to white when a path is erased, even if there was another path drawn beneath it. Dw the "backend" is correct - I was just too lazy to fix this bug.</p>
 	<svg height="900" width="1100" class="mainGrid"/>
 	<script>
@@ -52,6 +56,7 @@
 		let whiteColor = "#ffffff";
 		let greyColor = "#cdcdcd";
 		let paintColor = "#D4A0A7";
+		let statueColor = "#EDC7CC";
 
 		let maxThiefPaths = 20;
 
@@ -60,6 +65,7 @@
 		let thiefRgb = "rgb(130, 170, 181)";
 		let paintRgb = "rgb(212, 160, 167)";
 		let whiteRgb = "rgb(255, 255, 255)";
+		let statueRgb = "rgb(237, 199, 204)";
 
 		let isNewThief = false;
 		let tempThievesList = [];
@@ -67,13 +73,14 @@
 		let doorList = [];
 		let thiefList = [];
 		let paintingList = [];
+		let statueList = [];
 		let undoStack = [];
 
 
-		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "statue": paintColor};
+		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor, "statue": statueColor};
 
 		function createToggleButton() {
-			var keys = ["wall", "door", "thief", "statue"];
+			var keys = ["wall", "door", "thief", "painting", "statue"];
 			var buttonSize = 100;
 			var spaceBetweenButtons = 30;
 			var startingButtonX = (svgWidth - (buttonSize*keys.length + spaceBetweenButtons*(keys.length-1)))/2;
@@ -126,7 +133,7 @@
 			gridSvg.append("rect")
 				.attr("x", startingX)
 				.attr("y", 50)
-				.attr("width", 100)
+				.attr("width", buttonSize-20)
 				.attr("height", 50)
 				.attr("rx", 15)
 				.style("stroke", "black")
@@ -144,7 +151,7 @@
 					fillOuterWalls();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+buttonSize/2)
+				.attr("x", startingX+(buttonSize-20)/2)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -153,9 +160,9 @@
 
 			// add export button
 			gridSvg.append("rect")
-				.attr("x", svgWidth-startingX-buttonSize)
+				.attr("x", svgWidth-startingX-(buttonSize-20))
 				.attr("y", 50)
-				.attr("width", 100)
+				.attr("width", buttonSize-20)
 				.attr("height", 50)
 				.attr("rx", 15)
 				.style("stroke", "black")
@@ -169,9 +176,10 @@
 					doorList = [];
 					thiefList = [];
 					paintingList = [];
+					statueList = [];
 				});
 			gridSvg.append("text")
-				.attr("x", svgWidth-startingX-buttonSize/2)
+				.attr("x", svgWidth-startingX-(buttonSize-20)/2)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -180,9 +188,9 @@
 
 			// add undo button
 			gridSvg.append("rect")
-				.attr("x", startingX + buttonSize + spaceBetweenButtons)
+				.attr("x", startingX + (buttonSize-20) + spaceBetweenButtons)
 				.attr("y", 50)
-				.attr("width", 100)
+				.attr("width", buttonSize-20)
 				.attr("height", 50)
 				.attr("rx", 15)
 				.style("stroke", "black")
@@ -191,7 +199,7 @@
 					deleteLastItem();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX + spaceBetweenButtons+buttonSize*1.5)
+				.attr("x", startingX + spaceBetweenButtons+(buttonSize-20)*1.5)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -231,12 +239,15 @@
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle);
 						} 
+
 						// thief's paths can be drawn on other thieves' paths
-						else if (selectedToggle == "thief" && element.style("fill") != wallRgb && element.style("fill") != doorRgb && element.style("fill") != paintRgb) {
+						else if (selectedToggle == "thief" && element.style("fill") != wallRgb && element.style("fill") != doorRgb && element.style("fill") != paintRgb && element.style("fill") != statueRgb) {
 							var thiefCount = thiefList.length;
 							element.style("fill", d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85)));
 							addCoordToList(d, selectedToggle);
-						} else if (element.style("fill") == whiteRgb) {
+						} 
+						// anything can be drawn on white
+						else if (element.style("fill") == whiteRgb) {
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle);
 						}
@@ -249,7 +260,9 @@
 					var tempY = 150+tileSize*Number(d.y);
 
 					console.log(tempX + " " + tempY);
+
 					if (isDragging && selectedToggle != "") {
+						// create new item in respective list
 						addNewList(selectedToggle);
 						undoStack.push(selectedToggle);
 					}
@@ -277,14 +290,12 @@
 			var lastItem = undoStack.pop();
 			var tempList = [];
 			// get last item in list
-			if (lastItem == "wall") {
-				tempList = wallList[wallList.length-1];
-			} else if (lastItem == "door") {
-				tempList = doorList[doorList.length-1];
-			} else if (lastItem == "thief") {
+			if (lastItem == "thief") {
 				tempList = thiefList[thiefList.length-1]; 
-			} else if (lastItem == "statue") {
+			} else if (lastItem == "painting") {
 				tempList = paintingList[paintingList.length-1]; 
+			} else if (lastItem == "statue") {
+				tempList = statueList[statueList.length-1];
 			}
 
 			// change the color of last path to white
@@ -294,43 +305,34 @@
 			}
 
 			// delete last item in list
-			if (lastItem == "wall") {
-				wallList.pop();
-			} else if (lastItem == "door") {
-				doorList.pop()
-			} else if (lastItem == "thief") {
+			if (lastItem == "thief") {
 				thiefList.pop();
-			} else if (lastItem == "statue") {
+			} else if (lastItem == "painting") {
 				paintingList.pop();
+			} else if (lastItem == "statue") {
+				statueList.pop();
 			}
 
 		}
 
 		function addNewList(selectedToggle) {
-			if (selectedToggle == "wall") {
-				wallList.push([]);
-			} else if (selectedToggle == "door") {
-				doorList.push([]);
-			} else if (selectedToggle == "thief") {
+			if (selectedToggle == "thief") {
 				thiefList.push([]); 
-			} else if (selectedToggle == "statue") {
+			} else if (selectedToggle == "painting") {
 				paintingList.push([]); 
+			} else if (selectedToggle == "statue") {
+				statueList.push([]);
 			}
 		}
 
 		function addCoordToList(d, selectedToggle) {
-			if (selectedToggle == "wall") {
-				var tempObj = {"x": d.x, "y": d.y};
-				wallList[wallList.length-1].push(tempObj);
-			} else if (selectedToggle == "door") {
-				var tempObj = {"x": d.x, "y": d.y};
-				doorList[doorList.length-1].push(tempObj);
-			} else if (selectedToggle == "thief") {
-				var tempObj = {"x": d.x, "y": d.y};
+			var tempObj = {"x": d.x, "y": d.y};
+			if (selectedToggle == "thief") {
 				thiefList[thiefList.length-1].push(tempObj);
-			} else if (selectedToggle == "statue") {
-				var tempObj = {"x": d.x, "y": d.y};
+			} else if (selectedToggle == "painting") {
 				paintingList[paintingList.length-1].push(tempObj);
+			} else if (selectedToggle == "statue") {
+				statueList[statueList.length-1].push(tempObj);
 			}
 		}
 
@@ -349,17 +351,19 @@
 	  		console.log(wallList);
 	  		console.log(doorList);
 	  		console.log(thiefList);
-	  		console.log(document.getElementById("guards").value);
 	  		var defaultJson = {
-	  			"version": "1.4",
-	  			"walls": wallList,
-	  			"thieves": thiefList,
-	  			"doors": doorList,
+	  			"version": "1.5",
+	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
+	  			"walls": wallList,
+	  			"thieves": thiefList,
+	  			"doors": doorList,
+	  			"paintings": paintingList,
+	  			"statues": statueList, 
 	  			"numGuards": document.getElementById("guards").value,
 	  			"numTraps": document.getElementById("traps").value
 	  		};
@@ -368,7 +372,6 @@
 	  		for (var i = 0; i < numGridWidth; i++) {
 	  			for (var j = 0; j < numGridHeight; j++) {
 	  				var element = d3.select("#cell_"+i+"_"+j);
-	  				// console.log(element.style("fill"));
 
 	  				// walls
 	  				if (element.style("fill") == "rgb(167, 51, 63)") {
@@ -398,6 +401,8 @@
 			wallList = [];
 			doorList = [];
 			thiefList = [];
+			paintingList = [];
+			statueList = [];
 
 			d3.selectAll(".toggle")
 				.transition()
@@ -429,19 +434,35 @@
 	  				gameWidth = this.value;
 	  				numGridWidth = Math.floor(this.value/gameTileSize);
 	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
-	  			reset();
-	  			createGridDS();
-	  			drawGrid();
-	  		});
+		  			reset();
+		  			createGridDS();
+		  			drawGrid();
+		  		})
+	  			.on("focus", function() {
+	  				let offset = document.querySelector("#width").getBoundingClientRect();
+	  				let text = "max value is 1300"
+	  				showToolTip(text, offset.x, offset.y);
+	  			})
+	  			.on("blur", function() {
+	  				hideToolTip();
+	  			});
 
 	  		d3.select("#height")
 	  			.on("input", function() {
 	  				gameHeight = this.value;
 	  				numGridHeight =  Math.floor(this.value/gameTileSize);
-	  			reset();
-	  			createGridDS();
-	  			drawGrid();
-	  		});
+		  			reset();
+		  			createGridDS();
+		  			drawGrid();
+		  		})
+		  		.on("focus", function() {
+	  				let offset = document.querySelector("#height").getBoundingClientRect();
+	  				let text = "max value is 875"
+	  				showToolTip(text, offset.x, offset.y);
+	  			})
+	  			.on("blur", function() {
+	  				hideToolTip();
+	  			});
 
 	  		d3.select("#tile")
 	  			.on("input", function() {
@@ -449,17 +470,66 @@
 	  				numGridWidth =  Math.floor(gameWidth/gameTileSize);
 	  				numGridHeight =  Math.floor(gameHeight/gameTileSize);
 	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
-	  			reset();
-	  			window.setTimeout(createGridDS(), 5000);
-	  			drawGrid();
-	  		});
+		  			reset();
+		  			window.setTimeout(createGridDS(), 5000);
+		  			drawGrid();
+	  			})
+	  			.on("focus", function() {
+	  				let offset = document.querySelector("#tile").getBoundingClientRect();
+	  				let text = "changes to tile size take a while to take effect!"
+	  				showToolTip(text, offset.x, offset.y-20);
+	  			})
+	  			.on("blur", function() {
+	  				hideToolTip();
+	  			});
 
+	  	}
+
+	  	function addToolTip() {
+	  		d3.select("body")
+				.append("div")
+				.attr("class", "tooltip")
+				.style("padding", 10)
+				.style("position", "absolute")
+				.style("z-index", "10")
+				.style("visibility", "hidden")
+				.attr("white-space", "pre-line")
+				.style("background-color", "#fbfbfb")
+				.style("border-radius", "5px")
+				.style("border", "1px solid #cdcdcd");
+	  	}
+
+	  	function showToolTip(tooltipText, xOffset, yOffset) {
+	  		d3.select(".tooltip")
+	  			.transition()
+	  			.duration(200)
+    			.style("visibility", "visible");
+
+    		console.log("testing");
+
+    		d3.select(".tooltip")
+    			.html(tooltipText)
+   				.style("font-family", "Lato")
+   				.style("font-size", 13)
+	   			.style("max-width", 150)
+	   			.style("top", function() { return yOffset - 50; })
+	   			.style("left", function() {
+	   				return xOffset;
+	   			});
+	  	}
+
+	  	function hideToolTip() {
+	  		d3.select(".tooltip")
+	  			.transition()
+	  			.duration(200)
+    			.style("visibility", "hidden");
 	  	}
 
 	  	createGridDS();
 		createToggleButton();
 		drawGrid();
 		setDimensions();
+		addToolTip();
 		
 	</script>
 </body>
