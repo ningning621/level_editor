@@ -31,7 +31,7 @@
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
 	<br/>1. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
 	<br/>2. Tiles change back to white when a path is erased, even if there was another path drawn beneath it. Dw the "backend" is correct - I was just too lazy to fix this bug.</p>
-	<svg height="900" width="1100" class="mainGrid"/>
+	<svg style="margin-top: 20"height="900" width="1100" class="mainGrid"/>
 	<script>
 
 		let svgHeight = 900;
@@ -79,7 +79,7 @@
 
 		function createToggleButton() {
 			var keys = ["wall", "door", "thief", "painting", "statue"];
-			var buttonSize = 100;
+			var buttonSize = 90;
 			var spaceBetweenButtons = 30;
 			var startingButtonX = (svgWidth - (buttonSize*keys.length + spaceBetweenButtons*(keys.length-1)))/2;
 
@@ -93,7 +93,7 @@
 				.attr("class", "toggle")
 				.attr("id", function(d) {return "toggle_"+d})
 				.attr("x", function(d, i) {
-					return startingButtonX+130*i;
+					return startingButtonX+(buttonSize+spaceBetweenButtons)*i;
 				}).attr("y", 50)
 				.attr("rx", 15)
 				.attr("width", 100)
@@ -123,7 +123,11 @@
 					} else if (d == "statue") {
 						let offset = document.querySelector("#toggle_statue").getBoundingClientRect();
 		  				let text = "statues must be 2x2"
-		  				showToolTip(text, offset.x-20, offset.y);
+		  				showToolTip(text, offset.x-15, offset.y);
+					} else if (d == "door") {
+						let offset = document.querySelector("#toggle_door").getBoundingClientRect();
+		  				let text = "doors must be drawn on top of walls"
+		  				showToolTip(text, offset.x-35, offset.y-15);
 					}
 				})
 				.on("mouseout", function(d) {
@@ -133,7 +137,7 @@
 
 			for (var i = 0; i < keys.length; i++) {
 				gridSvg.append("text")
-					.attr("x", (startingButtonX+130*i)+50)
+					.attr("x", (startingButtonX+(buttonSize+spaceBetweenButtons)*i)+(50))
 					.attr("y", 80)
 					.style("text-anchor", "middle")
 					.style("font-family", "Lato")
@@ -144,66 +148,55 @@
 			// add reset button
 			gridSvg.append("rect")
 				.attr("x", startingX)
-				.attr("y", 50)
-				.attr("width", buttonSize-20)
-				.attr("height", 50)
+				.attr("y", 20)
+				.attr("width", buttonSize-10)
+				.attr("height", 40)
 				.attr("rx", 15)
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
-					d3.selectAll(".cell").style("fill", whiteColor);
-					isDragging = false;
-					selectedToggle = "";
-					d3.selectAll(".toggle")
-						.transition()
-						.duration(50)
-						.style("fill", whiteColor);
-					d3.selectAll(".grid_path").remove();
-
-					fillOuterWalls();
+					reset();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+(buttonSize-20)/2)
-				.attr("y", 80)
+				.attr("x", startingX+(buttonSize-10)/2)
+				.attr("y", 45)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
 				.style("font-color", "black")
-				.text("reset");
+				.text("reset")
+				.on("click", function() {
+					reset();
+				});
 
 			// add export button
 			gridSvg.append("rect")
-				.attr("x", svgWidth-startingX-(buttonSize-20))
-				.attr("y", 50)
-				.attr("width", buttonSize-20)
-				.attr("height", 50)
+				.attr("x", svgWidth-startingX-(buttonSize-10))
+				.attr("y", 55)
+				.attr("width", buttonSize-10)
+				.attr("height", 40)
 				.attr("rx", 15)
 				.style("stroke", "black")
 				.style("fill", whiteColor)
 				.on("click", function() {
-					exportFile(createFinalJson());
-					isNewThief = false;
-					isDragging = false;
-					selectedToggle = "";
-					wallList = [];
-					doorList = [];
-					thiefList = [];
-					paintingList = [];
-					statueList = [];
+					exportClicked();
 				});
 			gridSvg.append("text")
-				.attr("x", svgWidth-startingX-(buttonSize-20)/2)
+				.attr("x", svgWidth-startingX-(buttonSize-10)/2)
 				.attr("y", 80)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
 				.style("font-color", "black")
-				.text("export");
+				.text("export")
+				.on("click", function() {
+					exportClicked();
+				});
 
 			// add undo button
 			gridSvg.append("rect")
-				.attr("x", startingX + (buttonSize-20) + spaceBetweenButtons)
-				.attr("y", 50)
-				.attr("width", buttonSize-20)
-				.attr("height", 50)
+				.attr("x", startingX)
+				.attr("y", 80)
+				.attr("width", buttonSize-10)
+				.attr("height", 40)
 				.attr("rx", 15)
 				.style("stroke", "black")
 				.style("fill", whiteColor)
@@ -211,12 +204,63 @@
 					deleteLastItem();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX + spaceBetweenButtons+(buttonSize-20)*1.5)
-				.attr("y", 80)
+				.attr("x", startingX+(buttonSize-10)/2)
+				.attr("y", 105)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
 				.style("font-color", "black")
-				.text("undo");
+				.text("undo")
+				.on("click", function() {
+					deleteLastItem();
+				});
+
+			// show all paths button
+			gridSvg.append("rect")
+				.attr("x", startingX+buttonSize+10)
+				.attr("y", 20)
+				.attr("width", buttonSize+20)
+				.attr("height", 40)
+				.attr("rx", 15)
+				.style("stroke", "black")
+				.style("fill", whiteColor)
+				.on("click", function() {
+					showAllThieves();
+				});
+			gridSvg.append("text")
+				.attr("x", startingX+buttonSize+10+(buttonSize+20)/2)
+				.attr("y", 45)
+				.style("text-anchor", "middle")
+				.style("font-family", "Lato")
+				.style("font-color", "black")
+				.text("show thieves")
+				.on("click", function() {
+					showAllThieves();
+				});
+
+			// hide all paths button
+			gridSvg.append("rect")
+				.attr("x", startingX+buttonSize+10)
+				.attr("y", 80)
+				.attr("width", buttonSize+20)
+				.attr("height", 40)
+				.attr("rx", 15)
+				.style("stroke", "black")
+				.style("fill", whiteColor)
+				.on("click", function() {
+					console.log("click 1");
+					hideAllThieves();
+				});
+			gridSvg.append("text")
+				.attr("x", startingX+buttonSize+10+(buttonSize+20)/2)
+				.attr("y", 105)
+				.style("text-anchor", "middle")
+				.style("font-family", "Lato")
+				.style("font-color", "black")
+				.text("hide thieves")
+				.on("click", function() {
+					console.log("click 1");
+					hideAllThieves();
+				});
 		}
 
 
@@ -251,7 +295,6 @@
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle);
 						} 
-
 						// thief's paths can be drawn on other thieves' paths
 						else if (selectedToggle == "thief" && element.style("fill") != wallRgb && element.style("fill") != doorRgb && element.style("fill") != paintRgb && element.style("fill") != statueRgb) {
 							var thiefCount = thiefList.length;
@@ -259,7 +302,7 @@
 							addCoordToList(d, selectedToggle);
 						} 
 						// anything can be drawn on white
-						else if (element.style("fill") == whiteRgb) {
+						else if (element.style("fill") == whiteRgb && selectedToggle != "door") {
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle);
 						}
@@ -308,6 +351,10 @@
 				tempList = paintingList[paintingList.length-1]; 
 			} else if (lastItem == "statue") {
 				tempList = statueList[statueList.length-1];
+			} else if (lastItem == "wall") {
+				tempList = wallList[wallList.length-1];
+			} else if (lastItem == "door") {
+				tempList = doorList[doorList.length-1];
 			}
 
 			// change the color of last path to white
@@ -323,6 +370,10 @@
 				paintingList.pop();
 			} else if (lastItem == "statue") {
 				statueList.pop();
+			} else if (lastItem == "wall") {
+				wallList.pop();
+			} else if (lastItem == "door") {
+				doorList.pop();
 			}
 
 		}
@@ -334,18 +385,48 @@
 				paintingList.push([]); 
 			} else if (selectedToggle == "statue") {
 				statueList.push([]);
+			} else if (selectedToggle == "wall") {
+				wallList.push([]);
+			} else if (selectedToggle == "door") {
+				doorList.push([]);
 			}
 		}
 
 		function addCoordToList(d, selectedToggle) {
 			var tempObj = {"x": d.x, "y": d.y};
+
+
 			if (selectedToggle == "thief") {
-				thiefList[thiefList.length-1].push(tempObj);
+				if (!checkDuplicateCoord(thiefList, tempObj)) {
+					thiefList[thiefList.length-1].push(tempObj);
+				}
 			} else if (selectedToggle == "painting") {
-				paintingList[paintingList.length-1].push(tempObj);
+				if (!checkDuplicateCoord(paintingList, tempObj)) {
+					paintingList[paintingList.length-1].push(tempObj);
+				}
 			} else if (selectedToggle == "statue") {
-				statueList[statueList.length-1].push(tempObj);
+				if (!checkDuplicateCoord(statueList, tempObj)) {
+					statueList[statueList.length-1].push(tempObj);
+				}
+			} else if (selectedToggle == "wall") {
+				if (!checkDuplicateCoord(wallList, tempObj)) {
+					wallList[wallList.length-1].push(tempObj);
+				}
+			} else if (selectedToggle == "door") {
+				if (!checkDuplicateCoord(doorList, tempObj)) {
+					doorList[doorList.length-1].push(tempObj);
+				}
 			}
+		}
+
+		function checkDuplicateCoord(list, d) {
+			if (list[list.length-1].length == 0) {
+				return false;
+			} 
+
+			var lastPath = list[list.length-1];
+			var lastCoord = lastPath[lastPath.length-1];
+			return lastCoord.x == d.x && lastCoord.y == d.y;
 		}
 
 		function dragstarted(d) {
@@ -371,9 +452,9 @@
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
-	  			"walls": wallList,
+	  			"walls": [],
 	  			"thieves": thiefList,
-	  			"doors": doorList,
+	  			"doors": [],
 	  			"paintings": paintingList,
 	  			"statues": statueList, 
 	  			"numGuards": document.getElementById("guards").value,
@@ -386,8 +467,12 @@
 	  				var element = d3.select("#cell_"+i+"_"+j);
 
 	  				// walls
-	  				if (element.style("fill") == "rgb(167, 51, 63)") {
+	  				if (element.style("fill") == wallRgb) {
 	  					defaultJson["walls"].push({"x": i, "y": numGridHeight-j});
+	  				} 
+
+	  				if (element.style("fill") == doorRgb) {
+	  					defaultJson["doors"].push({"x": i, "y": numGridHeight-j});
 	  				} 
 
 	  			}
@@ -535,6 +620,53 @@
 	  			.transition()
 	  			.duration(200)
     			.style("visibility", "hidden");
+	  	}
+
+	  	function hideAllThieves() {
+	  		console.log(thiefList);
+	  		thiefList.map(function(path) {
+	  			path.map(function(coord) {
+	  				var element = d3.select("#cell_"+coord.x+"_"+coord.y);
+	  				element.style("fill", whiteColor);
+	  				return coord;
+	  			});
+	  			return path;
+	  		});
+	  	}
+
+	  	function showAllThieves() {
+	  		console.log(thiefList);
+	  		for (var i = 0; i < thiefList.length; i++) {
+	  			for (var j = 0; j < thiefList[i].length; j++) {
+	  				var element = d3.select("#cell_"+thiefList[i][j].x+"_"+thiefList[i][j].y);
+	  				element.style("fill", d3.interpolateBlues(0.15+(i/maxThiefPaths*0.85)));
+	  			}
+	  		}
+	  	}
+
+	  	function reset() {
+			d3.selectAll(".cell").style("fill", whiteColor);
+			isDragging = false;
+			selectedToggle = "";
+			d3.selectAll(".toggle")
+				.transition()
+				.duration(50)
+				.style("fill", whiteColor);
+			d3.selectAll(".grid_path").remove();
+
+			fillOuterWalls();
+	  	}
+
+	  	function exportClicked() {
+	  		exportFile(createFinalJson());
+			isNewThief = false;
+			isDragging = false;
+			selectedToggle = "";
+			wallList = [];
+			doorList = [];
+			thiefList = [];
+			paintingList = [];
+			statueList = [];
 	  	}
 
 	  	createGridDS();
