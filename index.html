@@ -11,7 +11,7 @@
 <body bgcolor="#f8f8f8" style="text-align: center;">
 	<h3 style="font-family: Montserrat;">Welcome to Version 1.5 🎉🎉</h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
-		<label style="margin-right: 20px;" for="level_num">Level: </label>
+		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
 	</div>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60px">
@@ -29,10 +29,8 @@
 		<input value="0" style="border-radius: 10px" type="number" id="traps"><br><br>
 	</div>
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
-	<br/>1. Please don't input values that will force the svg to overfill. If you do, the web app will crash :( 
-	<br/>2. Don't change the tile size unless you <i>really</i> have to. 
-	<br/>3. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
-	<br/>4. Tiles change back to white when a path is erased, even if there was another path drawn beneath it. Dw the "backend" is correct - I was just too lazy to fix this bug.</p>
+	<br/>1. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
+	<br/>2. Tiles change back to white when a path is erased, even if there was another path drawn beneath it. Dw the "backend" is correct - I was just too lazy to fix this bug.</p>
 	<svg height="900" width="1100" class="mainGrid"/>
 	<script>
 
@@ -116,6 +114,20 @@
 
 					isDragging = false;
 
+				})
+				.on("mouseover", function(d) {
+					if (d == "painting") {
+						let offset = document.querySelector("#toggle_painting").getBoundingClientRect();
+		  				let text = "paintings are drawn adjacent to a wall and must be 1x2 or 2x1"
+		  				showToolTip(text, offset.x-35, offset.y-30);
+					} else if (d == "statue") {
+						let offset = document.querySelector("#toggle_statue").getBoundingClientRect();
+		  				let text = "statues must be 2x2"
+		  				showToolTip(text, offset.x-20, offset.y);
+					}
+				})
+				.on("mouseout", function(d) {
+					hideToolTip();
 				});
 
 
@@ -512,9 +524,9 @@
    				.style("font-family", "Lato")
    				.style("font-size", 13)
 	   			.style("max-width", 150)
-	   			.style("top", function() { return yOffset - 50; })
+	   			.style("top", function() {return window.scrollY+yOffset - 50; })
 	   			.style("left", function() {
-	   				return xOffset;
+	   				return window.scrollX+xOffset;
 	   			});
 	  	}
 
