@@ -9,7 +9,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">Welcome to Version 1.5 🎉🎉</h3>
+	<h3 style="font-family: Montserrat;">The Night Watch (v. 1.6) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
@@ -73,6 +73,7 @@
 		let statueList = [];
 		let undoStack = [];
 		let coordMap = {};
+		let thiefToTargetList = {};
 
 
 		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor, "statue": statueColor};
@@ -98,19 +99,20 @@
 				.attr("rx", 15)
 				.attr("width", 100)
 				.attr("height", 50)
+				.style("opacity", 0.25)
 				.style("stroke", "black")
-				.style("fill", whiteColor)
+				.style("fill", function(d) { return toggleColor[d];})
 				.on("click", function(d, i) {
 					selectedToggle = d;
 
 					d3.selectAll(".toggle")
 						.transition()
 						.duration(50)
-						.style("fill", whiteColor);
+						.style("opacity", 0.25);
 					d3.select("#toggle_"+d)
 						.transition()
 						.duration(100)
-						.style("fill", toggleColor[d]);
+						.style("opacity", 0.9);
 
 					isDragging = false;
 
@@ -142,7 +144,21 @@
 					.style("text-anchor", "middle")
 					.style("font-family", "Lato")
 					.style("font-color", "black")
-					.text(keys[i]);
+					.text(keys[i])
+					.on("click", function(d, i) {
+						selectedToggle = keys[i];
+
+						d3.selectAll(".toggle")
+							.transition()
+							.duration(50)
+							.style("opacity", 0.25);
+						d3.select("#toggle_"+keys[i])
+							.transition()
+							.duration(100)
+							.style("opacity", 0.9);
+
+						isDragging = false;
+					});
 			}
 
 			// add reset button
@@ -294,13 +310,31 @@
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle, toggleColor[selectedToggle]);
 						} 
+
 						// thief's paths can be drawn on other thieves' paths
 						else if (selectedToggle == "thief" && element.style("fill") != wallRgb && element.style("fill") != doorRgb && element.style("fill") != paintRgb && element.style("fill") != statueRgb) {
 							var thiefCount = thiefList.length;
 							var color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
 							element.style("fill", color);
 							addCoordToList(d, selectedToggle, color);
-						} 
+						}
+
+						// record target for thief
+						else if (selectedToggle == "thief" && element.style("fill") == paintRgb) {
+							drawBlackBorder(gridSvg, d.x, d.y);
+
+							var thiefNum = thiefList.length - 1;
+							thiefToTargetList[thiefNum] = findUid(paintingList, "painting", d.x, d.y);
+						}
+
+						// record target for thief
+						else if (selectedToggle == "thief" && element.style("fill") == statueRgb) {
+							drawBlackBorder(gridSvg, d.x, d.y);
+							
+							var thiefNum = thiefList.length - 1;
+							thiefToTargetList[thiefNum] = findUid(statueList, "statue", d.x, d.y);
+						}  
+
 						// everything else can be drawn on white
 						else if (element.style("fill") == whiteRgb && selectedToggle != "door") {
 							element.style("fill", toggleColor[selectedToggle]);
@@ -311,8 +345,6 @@
 				}).on("click", function(d) {
 					isDragging = !isDragging;
 					var element = d3.select("#cell_"+d.x+"_"+d.y);
-					var tempX = startingX+tileSize*Number(d.x);
-					var tempY = 150+tileSize*Number(d.y);
 
 					// console.log(tempX + " " + tempY);
 
@@ -329,17 +361,7 @@
 						addCoordToList(d, selectedToggle, color);
 					}
 					if (isDragging && selectedToggle == "thief") {
-						//draw border for starting position of thief
-						gridSvg.append("path")
-							.attr("class", "grid_path")
-							.style("stroke", "black")
-							.style("stroke-width", 2)
-							.style("fill", "none")
-							.attr("d", "M" + tempX + " " + tempY 
-								+ "L" + (tempX+tileSize) + " "+ tempY 
-								+ "L" + (tempX+tileSize) + " " + (tempY+tileSize)
-								+ "L" + (tempX) + " " + (tempY+tileSize)
-								+ "L" + tempX + " " + tempY);	
+						drawBlackBorder(gridSvg, d.x, d.y);
 					} else {
 						d3.selectAll(".grid_path").remove();
 					}
@@ -383,6 +405,9 @@
 			// delete last item in list
 			if (lastItem == "thief") {
 				thiefList.pop();
+
+				var thiefNum = thiefList.length;
+				delete thiefToTargetList[thiefNum];
 			} else if (lastItem == "painting") {
 				paintingList.pop();
 			} else if (lastItem == "statue") {
@@ -466,8 +491,9 @@
 	  		console.log(wallList);
 	  		console.log(doorList);
 	  		console.log(thiefList);
+	  		console.log(thiefToTargetList);
 	  		var defaultJson = {
-	  			"version": "1.5",
+	  			"version": "1.6",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
@@ -671,6 +697,7 @@
 			paintingList = [];
 			statueList = [];
 			coordMap = {};
+			thiefToTargetList = {};
 
 			d3.selectAll(".toggle")
 				.transition()
@@ -693,6 +720,47 @@
 			} else {
 				coordMap[tempKey].unshift(color);
 			}
+	  	}
+
+	  	function drawBlackBorder(gridSvg, x, y) {
+	  		var tempX = startingX+tileSize*Number(x);
+			var tempY = 150+tileSize*Number(y);
+
+	  		//draw border for starting position of thief
+			gridSvg.append("path")
+				.attr("class", "grid_path")
+				.style("stroke", "black")
+				.style("stroke-width", 2)
+				.style("fill", "none")
+				.attr("d", "M" + tempX + " " + tempY 
+					+ "L" + (tempX+tileSize) + " "+ tempY 
+					+ "L" + (tempX+tileSize) + " " + (tempY+tileSize)
+					+ "L" + (tempX) + " " + (tempY+tileSize)
+					+ "L" + tempX + " " + tempY);
+	  	}
+
+	  	function findUid(list, target, x, y) {
+	  		var tempNum = 0;
+	  		var tempLetter = "t";
+	  		console.log(list);
+	  		for (var i = 0; i < list.length; i++) {
+	  			for (var j = 0; j < list[i].length; j++) {
+	  				console.log("uidddd: " + list[i][j].x + " " + list[i][j].y);
+		  			console.log(x);
+		  			console.log(y);
+		  			if (x == list[i][j].x && y == list[i][j].y) {
+		  				tempNum = i;
+		  			}
+	  			} 
+	  		}
+
+	  		if (target == "painting") {
+	  			tempLetter = "p";
+	  		} else if (target == "statue") {
+	  			tempLetter = "s";
+	  		}
+
+	  		return tempLetter+tempNum;
 	  	}
 
 	  	createGridDS();
