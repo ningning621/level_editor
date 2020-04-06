@@ -549,7 +549,7 @@
 	  				.style("fill", wallColor);
 
 	  			addToCoordMap(0, i, wallRgb);
-	  			addToCoordMap((numGridHeight-1), i, wallRgb);
+	  			addToCoordMap((numGridWidth-1), i, wallRgb);
 	  		}
 	  	}
 
@@ -688,7 +688,7 @@
 			d3.selectAll(".toggle")
 				.transition()
 				.duration(50)
-				.style("fill", whiteColor);
+				.style("opacity", 0.3);
 			d3.selectAll(".grid_path").remove();
 
 			fillOuterWalls();
