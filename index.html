@@ -291,7 +291,7 @@
 					if (isDragging && selectedToggle != "") {
 						var element = d3.select("#cell_"+d.x+"_"+d.y);
 
-						// doors can be drawn on walls
+						// doors can only be drawn on walls
 						if (selectedToggle == "door" && (element.style("fill") == wallRgb)) {
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle, toggleColor[selectedToggle]);
@@ -336,15 +336,19 @@
 
 					if (isDragging && selectedToggle != "") {
 						// create new item in respective list
-						addNewList(selectedToggle);
-						undoStack.push(selectedToggle);
+						if ((selectedToggle == "door" && (element.style("fill") == wallRgb)) 
+							|| selectedToggle == "thief" 
+							|| (element.style("fill") == whiteRgb && selectedToggle != "door")) {
+							addNewList(selectedToggle);
+							undoStack.push(selectedToggle);
 
-						var color = toggleColor[selectedToggle];
-						if (selectedToggle == "thief") {
-							var thiefCount = thiefList.length;
-							color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
-						}
-						addCoordToList(d, selectedToggle, color);
+							var color = toggleColor[selectedToggle];
+							if (selectedToggle == "thief") {
+								var thiefCount = thiefList.length;
+								color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
+							}
+							addCoordToList(d, selectedToggle, color);
+							}
 					}
 					if (isDragging && selectedToggle == "thief") {
 						drawBlackBorder(gridSvg, d.x, d.y);
