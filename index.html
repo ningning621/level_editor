@@ -30,6 +30,7 @@
 		<label style="margin-left: 40px; margin-right: 20px;" for="thieves">Num of Thieves: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="thieves"><br><br>
 	</div>
+	<p id="drag_bool" style="font-family: Lato; position: fixed; left: 30; top : 20">dragging is <b>OFF</b></p>
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
 	<br/>1. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
 	<br/>2. First click inside grid enables dragging and second click completes the path. If you mess up on a path, click to disengage dragging and undo. </p>
@@ -121,7 +122,7 @@
 						.style("opacity", 0.8);
 
 					isDragging = false;
-
+					changeDraggingText();
 				})
 				.on("mouseover", function(d) {
 					if (d == "painting") {
@@ -342,31 +343,39 @@
 					var element = d3.select("#cell_"+d.x+"_"+d.y);
 
 					if (selectedToggle != "") {
+
 						//disengage dragging 
 						if (isDragging && (element.style("fill") == toggleColorRgb[selectedToggle] || selectedToggle == "thief")) {
 							isDragging = !isDragging;
+							changeDraggingText();
 						}
 
 						// create new item in respective list
 						else if ((selectedToggle == "door" && (element.style("fill") == wallRgb)) 
 							|| (selectedToggle == "wall" && (element.style("fill") == doorRgb))
-							|| (selectedToggle == "thief" && (element.style("fill") != wallRgb) && (element.style("fill") != doorRgb) && (element.style("fill") != paintRgb) && (element.style("fill") != statueRgb))
+							|| (selectedToggle == "thief" && (element.style("fill") != wallRgb) 
+								&& (element.style("fill") != doorRgb) 
+								&& (element.style("fill") != paintRgb) 
+								&& (element.style("fill") != statueRgb))
 							|| (element.style("fill") == whiteRgb && selectedToggle != "door")) {
 							isDragging = !isDragging;
+							changeDraggingText();
+
 							addNewList(selectedToggle);
 							undoStack.push(selectedToggle);
 
 							var color = toggleColor[selectedToggle];
 							if (selectedToggle == "thief") {
-								drawBlackBorder(gridSvg, d.x, d.y);
 								var thiefCount = thiefList.length;
 								color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
 							}
+
 							addCoordToList(d, selectedToggle, color);
-							}
+						}
 					}
+
 					if (isDragging && selectedToggle == "thief") {
-						// drawBlackBorder(gridSvg, d.x, d.y);
+						drawBlackBorder(gridSvg, d.x, d.y);
 					} else {
 						d3.selectAll(".grid_path").remove();
 					}
@@ -420,6 +429,7 @@
 
 				var thiefNum = thiefList.length;
 				delete thiefToTargetList[thiefNum];
+
 			} else if (lastItem == "painting") {
 				paintingList.pop();
 			} else if (lastItem == "statue") {
@@ -448,7 +458,6 @@
 
 		function addCoordToList(d, selectedToggle, color) {
 			var tempObj = {"x": d.x, "y": d.y};
-
 
 			if (selectedToggle == "thief") {
 				if (!checkDuplicateCoord(thiefList, tempObj)) {
@@ -521,6 +530,7 @@
 	  		return defaultJson;
 	  	}
 
+	  	// for final json
 	  	function getFinalTargetList() {
 	  		let tempList = [];
 	  		for (let i = 0; i < paintingList.length; i++) {
@@ -542,6 +552,7 @@
 	  		return tempList;
 	  	}
 
+	  	// for final json
 	  	function getFinalThievesList() {
 	  		let tempList = [];
 
@@ -555,12 +566,14 @@
 	  		return tempList;
 	  	}
 
+	  	// for final json
 	  	function flipYValues(list) {
 	  		return list.map(function(d) {
 	  			return {"x": d.x, "y": numGridHeight-d.y};
 	  		});
 	  	}
 
+	  	// for final json
 	  	function getFinalValueByColor(rgb) {
 	  		let tempList = [];
 	  		for (let i = 0; i < numGridWidth; i++) {
@@ -575,6 +588,7 @@
 	  		return tempList;
 	  	}
 
+	  	// for final json
 	  	function exportFile(defaultJson) {
 	  		let pp = document.createElement('a');
                 pp.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(defaultJson)));
@@ -588,6 +602,7 @@
 	  		resetClicked();
 	  	}
 
+	  	// color in outer walls 
 	  	function fillOuterWalls() {
 	  		for (var i = 0; i < numGridWidth; i++) {
 	  			d3.select("#cell_" + i + "_" + 0)
@@ -745,6 +760,8 @@
 			coordMap = {};
 			thiefToTargetList = {};
 
+			changeDraggingText();
+
 			d3.selectAll(".toggle")
 				.transition()
 				.duration(50)
@@ -804,6 +821,12 @@
 	  		}
 
 	  		return tempLetter+tempNum;
+	  	}
+
+	  	function changeDraggingText() {
+	  		let text = isDragging ? "ON" : "OFF";
+	  		console.log(document.getElementById("drag_bool"));
+			document.getElementById("drag_bool").innerHTML = "dragging is " + text.bold();
 	  	}
 
 	  	createGridDS();
