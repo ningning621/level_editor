@@ -295,8 +295,8 @@
 					if (isDragging && selectedToggle != "") {
 						var element = d3.select("#cell_"+d.x+"_"+d.y);
 
-						// doors can only be drawn on walls
-						if (selectedToggle == "door" && (element.style("fill") == wallRgb)) {
+						// doors can only be drawn on walls and vice versa
+						if (selectedToggle == "door" && (element.style("fill") == wallRgb) || selectedToggle == "wall" && (element.style("fill") == doorRgb)) {
 							element.style("fill", toggleColor[selectedToggle]);
 							addCoordToList(d, selectedToggle, toggleColor[selectedToggle]);
 						} 
@@ -341,6 +341,7 @@
 					if (isDragging && selectedToggle != "") {
 						// create new item in respective list
 						if ((selectedToggle == "door" && (element.style("fill") == wallRgb)) 
+							|| selectedToggle == "wall" && (element.style("fill") == doorRgb)
 							|| selectedToggle == "thief" 
 							|| (element.style("fill") == whiteRgb && selectedToggle != "door")) {
 							addNewList(selectedToggle);
