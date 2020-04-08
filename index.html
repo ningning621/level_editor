@@ -27,9 +27,12 @@
 		<input value="0" style="border-radius: 10px" type="number" id="guards"><br><br>
 		<label style="margin-left: 40px; margin-right: 20px;" for="traps">Num of Traps: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="traps"><br><br>
+		<label style="margin-left: 40px; margin-right: 20px;" for="thieves">Num of Thieves: </label>
+		<input value="0" style="border-radius: 10px" type="number" id="thieves"><br><br>
 	</div>
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
 	<br/>Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.</p>
+	<br/>First click inside grid enables dragging and second click will complete </p>
 	<svg style="margin-top: 20"height="900" width="1100" class="mainGrid"/>
 	<script>
 
@@ -65,6 +68,7 @@
 		let statueRgb = "rgb(237, 199, 204)";
 
 		let isNewThief = false;
+		let isHideThieves = false;
 		let tempThievesList = [];
 		let wallList = [];
 		let doorList = [];
@@ -77,6 +81,8 @@
 
 
 		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor, "statue": statueColor};
+
+		let toggleColorRgb = {"wall": wallRgb, "door": doorRgb, "thief": thiefRgb, "painting": paintRgb, "statue": statueRgb};
 
 		function createToggleButton() {
 			var keys = ["wall", "door", "thief", "painting", "statue"];
@@ -208,7 +214,6 @@
 				.style("fill", whiteColor)
 				.on("click", function() {
 					deleteLastItem();
-					console.log(coordMap);
 				});
 			gridSvg.append("text")
 				.attr("x", startingX+(buttonSize-10)/2)
@@ -333,22 +338,27 @@
 						
 					}
 				}).on("click", function(d) {
-					isDragging = !isDragging;
+					
 					var element = d3.select("#cell_"+d.x+"_"+d.y);
 
-					// console.log(tempX + " " + tempY);
+					if (selectedToggle != "") {
+						//disengage dragging 
+						if (isDragging && (element.style("fill") == toggleColorRgb[selectedToggle] || selectedToggle == "thief")) {
+							isDragging = !isDragging;
+						}
 
-					if (isDragging && selectedToggle != "") {
 						// create new item in respective list
-						if ((selectedToggle == "door" && (element.style("fill") == wallRgb)) 
-							|| selectedToggle == "wall" && (element.style("fill") == doorRgb)
-							|| selectedToggle == "thief" 
+						else if ((selectedToggle == "door" && (element.style("fill") == wallRgb)) 
+							|| (selectedToggle == "wall" && (element.style("fill") == doorRgb))
+							|| (selectedToggle == "thief" && (element.style("fill") != wallRgb) && (element.style("fill") != doorRgb) && (element.style("fill") != paintRgb) && (element.style("fill") != statueRgb))
 							|| (element.style("fill") == whiteRgb && selectedToggle != "door")) {
+							isDragging = !isDragging;
 							addNewList(selectedToggle);
 							undoStack.push(selectedToggle);
 
 							var color = toggleColor[selectedToggle];
 							if (selectedToggle == "thief") {
+								drawBlackBorder(gridSvg, d.x, d.y);
 								var thiefCount = thiefList.length;
 								color = d3.interpolateBlues(0.15+(thiefCount/maxThiefPaths*0.85));
 							}
@@ -356,7 +366,7 @@
 							}
 					}
 					if (isDragging && selectedToggle == "thief") {
-						drawBlackBorder(gridSvg, d.x, d.y);
+						// drawBlackBorder(gridSvg, d.x, d.y);
 					} else {
 						d3.selectAll(".grid_path").remove();
 					}
@@ -364,6 +374,7 @@
 
 			fillOuterWalls();
 		}
+
 
 		function deleteLastItem() {
 			var lastItem = undoStack.pop();
@@ -394,6 +405,12 @@
 					var color = coordMap[key][0];
 					d3.select("#cell_" + key)
 						.style("fill", color);
+				}
+
+				// additional condition to change tile to white if currently hiding thieves
+				if (isHideThieves && lastItem == "thief") {
+					d3.select("#cell_" + key)
+						.style("fill", whiteColor);
 				}
 			}
 
@@ -496,7 +513,8 @@
 	  			"thieves": getFinalThievesList(), 
 	  			"targets": getFinalTargetList(), 
 	  			"numGuards": document.getElementById("guards").value,
-	  			"numTraps": document.getElementById("traps").value
+	  			"numTraps": document.getElementById("traps").value,
+	  			"numThieves": document.getElementById("thieves").value
 	  		};
 
 	  		console.log(defaultJson);
@@ -690,6 +708,8 @@
 	  	}
 
 	  	function hideAllThieves() {
+	  		isHideThieves = true;
+
 	  		thiefList.map(function(path) {
 	  			path.map(function(coord) {
 	  				var element = d3.select("#cell_"+coord.x+"_"+coord.y);
@@ -701,10 +721,12 @@
 	  	}
 
 	  	function showAllThieves() {
+	  		isHideThieves = false;
+
 	  		for (var i = 0; i < thiefList.length; i++) {
 	  			for (var j = 0; j < thiefList[i].length; j++) {
 	  				var element = d3.select("#cell_"+thiefList[i][j].x+"_"+thiefList[i][j].y);
-	  				element.style("fill", d3.interpolateBlues(0.15+(i/maxThiefPaths*0.85)));
+	  				element.style("fill", d3.interpolateBlues(0.15+((i+1)/maxThiefPaths*0.85)));
 	  			}
 	  		}
 	  	}
@@ -712,6 +734,7 @@
 	  	function resetClicked() {
 			d3.selectAll(".cell").style("fill", whiteColor);
 			isDragging = false;
+			isHideThieves = false;
 			selectedToggle = "";
 			isNewThief = false;
 			wallList = [];
