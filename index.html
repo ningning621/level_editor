@@ -9,7 +9,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.8) </h3>
+	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.8.1) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
@@ -30,10 +30,10 @@
 		<label style="margin-left: 40px; margin-right: 20px;" for="thieves">Num of Thieves: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="thieves"><br><br>
 	</div>
-	<p id="drag_bool" style="font-family: Lato; position: fixed; left: 30; top : 20">dragging is <b>OFF</b></p>
+	<p id="drag_bool" style="font-family: Lato; position: fixed; left: 20; top : 10">dragging is <b>OFF</b></p>
 	<p style="font-family: Lato; text-align: left;margin: 0 auto; width: 1000;"><b>Several notes:</b> 
 	<br/>1. Coordinates are recorded in real time so it's important to draw the paths without skips on the grid.
-	<br/>2. First click inside grid enables dragging and second click completes the path. If you mess up on a path, click to disengage dragging and undo. </p>
+	<br/>2. First click inside grid enables dragging and second click completes the path. If you mess up on drawing a path, click to disengage dragging and undo. </p>
 	<svg style="margin-top: 20"height="900" width="1100" class="mainGrid"/>
 	<script>
 
@@ -82,7 +82,6 @@
 
 
 		let toggleColor = {"wall": wallColor, "door": doorColor, "thief": thiefColor, "painting": paintColor, "statue": statueColor};
-
 		let toggleColorRgb = {"wall": wallRgb, "door": doorRgb, "thief": thiefRgb, "painting": paintRgb, "statue": statueRgb};
 
 		function createToggleButton() {
@@ -184,7 +183,7 @@
 			// add export button
 			gridSvg.append("rect")
 				.attr("x", svgWidth-startingX-(buttonSize-10))
-				.attr("y", 55)
+				.attr("y", 80)
 				.attr("width", buttonSize-10)
 				.attr("height", 40)
 				.attr("rx", 15)
@@ -195,7 +194,7 @@
 				});
 			gridSvg.append("text")
 				.attr("x", svgWidth-startingX-(buttonSize-10)/2)
-				.attr("y", 80)
+				.attr("y", 105)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
 				.style("font-color", "black")
@@ -379,11 +378,41 @@
 					} else {
 						d3.selectAll(".grid_path").remove();
 					}
+			}).on("mouseover", function(d) {
+				var element = d3.select("#cell_"+d.x+"_"+d.y);
+
+				// show tooltip for paintings
+				if (element.style("fill") == paintRgb) {
+					let offset = document.querySelector("#cell_"+d.x+"_"+d.y).getBoundingClientRect(); 
+		  			let text = "currently assigned " + getThievesByPainting(d.x, d.y, "painting", paintingList) + " thieves";
+		  			showToolTip(text, offset.x-35, offset.y-30, 80);
+				}
+
+				// show tooltip for statues
+				else if (element.style("fill") == statueRgb) {
+					let offset = document.querySelector("#cell_"+d.x+"_"+d.y).getBoundingClientRect(); 
+		  			let text = "currently assigned " + getThievesByPainting(d.x, d.y, "statue", statueList) + " thieves";
+		  			showToolTip(text, offset.x-35, offset.y-30, 80);
+				}
+			}).on("mouseout", function() {
+				hideToolTip();
 			});
 
 			fillOuterWalls();
 		}
 
+		// get number of thieves are assigned to a painting
+		function getThievesByPainting(x, y, target, list) {
+			let id = findUid(list, target, x, y);
+			let count = 0;
+			for (let i = 0; i < Object.keys(thiefToTargetList).length; i++) {
+				if (thiefToTargetList[i] == id) {
+					count++;
+				}
+			}
+
+			return count;
+		}
 
 		function deleteLastItem() {
 			var lastItem = undoStack.pop();
@@ -510,7 +539,7 @@
 
 	  	function createFinalJson() {
 	  		var defaultJson = {
-	  			"version": "1.8",
+	  			"version": "1.8.1",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
@@ -698,7 +727,7 @@
 				.style("border", "1px solid #cdcdcd");
 	  	}
 
-	  	function showToolTip(tooltipText, xOffset, yOffset) {
+	  	function showToolTip(tooltipText, xOffset, yOffset, maxWidth = "150") {
 	  		d3.select(".tooltip")
 	  			.transition()
 	  			.duration(200)
@@ -708,7 +737,7 @@
     			.html(tooltipText)
    				.style("font-family", "Lato")
    				.style("font-size", 13)
-	   			.style("max-width", 150)
+	   			.style("max-width", maxWidth)
 	   			.style("top", function() {return window.scrollY+yOffset - 50; })
 	   			.style("left", function() {
 	   				return window.scrollX+xOffset;
