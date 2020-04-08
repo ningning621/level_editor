@@ -9,7 +9,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">The Night Watch (v. 1.6) </h3>
+	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.7) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
@@ -130,6 +130,10 @@
 						let offset = document.querySelector("#toggle_door").getBoundingClientRect();
 		  				let text = "doors must be drawn on top of walls"
 		  				showToolTip(text, offset.x-35, offset.y-15);
+					} else if (d == "thief") {
+						let offset = document.querySelector("#toggle_thief").getBoundingClientRect();
+		  				let text = "must hover over target during path to pair them automatically in json"
+		  				showToolTip(text, offset.x-35, offset.y-30);
 					}
 				})
 				.on("mouseout", function(d) {
@@ -478,50 +482,82 @@
 	  	}
 
 	  	function createFinalJson() {
-	  		console.log(wallList);
-	  		console.log(doorList);
-	  		console.log(thiefList);
-	  		console.log(thiefToTargetList);
 	  		var defaultJson = {
-	  			"version": "1.6",
+	  			"version": "1.7",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
-	  			"walls": [],
-	  			"thieves": thiefList,
-	  			"doors": [],
-	  			"paintings": paintingList,
-	  			"statues": statueList, 
+	  			"walls": getFinalValueByColor(wallRgb),
+	  			"doors": getFinalValueByColor(doorRgb),
+	  			"thieves": getFinalThievesList(), 
+	  			"targets": getFinalTargetList(), 
 	  			"numGuards": document.getElementById("guards").value,
 	  			"numTraps": document.getElementById("traps").value
 	  		};
 
-	  		// getting wall and door values 
-	  		for (var i = 0; i < numGridWidth; i++) {
-	  			for (var j = 0; j < numGridHeight; j++) {
-	  				var element = d3.select("#cell_"+i+"_"+j);
-
-	  				// walls
-	  				if (element.style("fill") == wallRgb) {
-	  					defaultJson["walls"].push({"x": i, "y": numGridHeight-j});
-	  				} 
-
-	  				if (element.style("fill") == doorRgb) {
-	  					defaultJson["doors"].push({"x": i, "y": numGridHeight-j});
-	  				} 
-
-	  			}
-	  		}
 	  		console.log(defaultJson);
 	  		return defaultJson;
 	  	}
 
+	  	function getFinalTargetList() {
+	  		let tempList = [];
+	  		for (let i = 0; i < paintingList.length; i++) {
+	  			tempList.push({
+	  				"type": "painting", 
+	  				"uid": "p" + i,
+	  				"location": flipYValues(paintingList[i])
+	  			});
+	  		}
+
+	  		for (let i = 0; i < statueList.length; i++) {
+	  			tempList.push({
+	  				"type": "statue", 
+	  				"uid": "s" + i,
+	  				"location": flipYValues(statueList[i])
+	  			});
+	  		}
+
+	  		return tempList;
+	  	}
+
+	  	function getFinalThievesList() {
+	  		let tempList = [];
+
+	  		for (let i = 0; i < thiefList.length; i++) {
+	  			tempList.push({
+	  				"path": flipYValues(thiefList[i]),
+	  				"target": thiefToTargetList[i]
+	  			});
+	  		}
+
+	  		return tempList;
+	  	}
+
+	  	function flipYValues(list) {
+	  		return list.map(function(d) {
+	  			return {"x": d.x, "y": numGridHeight-d.y};
+	  		});
+	  	}
+
+	  	function getFinalValueByColor(rgb) {
+	  		let tempList = [];
+	  		for (let i = 0; i < numGridWidth; i++) {
+	  			for (let j = 0; j < numGridHeight; j++) {
+	  				let element = d3.select("#cell_"+i+"_"+j);
+
+	  				if (element.style("fill") == rgb) {
+	  					tempList.push({"x": i, "y": numGridHeight-j});
+	  				} 
+	  			}
+	  		}
+	  		return tempList;
+	  	}
+
 	  	function exportFile(defaultJson) {
-	  		console.log(defaultJson);
-	  		var pp = document.createElement('a');
+	  		let pp = document.createElement('a');
                 pp.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(defaultJson)));
                 pp.setAttribute('download', "thenightwatch.json");
                 pp.click();
@@ -600,7 +636,7 @@
 	  				numGridHeight =  Math.floor(gameHeight/gameTileSize);
 	  				startingX = (svgWidth - numGridWidth*tileSize)/2;
 		  			removeMainGrid();
-		  			window.setTimeout(createGridDS(), 5000);
+		  			window.setTimeout(createGridDS(), 10000);
 		  			drawGrid();
 	  			})
 	  			.on("focus", function() {
@@ -634,8 +670,6 @@
 	  			.duration(200)
     			.style("visibility", "visible");
 
-    		console.log("testing");
-
     		d3.select(".tooltip")
     			.html(tooltipText)
    				.style("font-family", "Lato")
@@ -655,7 +689,6 @@
 	  	}
 
 	  	function hideAllThieves() {
-	  		console.log(thiefList);
 	  		thiefList.map(function(path) {
 	  			path.map(function(coord) {
 	  				var element = d3.select("#cell_"+coord.x+"_"+coord.y);
@@ -667,7 +700,6 @@
 	  	}
 
 	  	function showAllThieves() {
-	  		console.log(thiefList);
 	  		for (var i = 0; i < thiefList.length; i++) {
 	  			for (var j = 0; j < thiefList[i].length; j++) {
 	  				var element = d3.select("#cell_"+thiefList[i][j].x+"_"+thiefList[i][j].y);
@@ -729,15 +761,12 @@
 					+ "L" + tempX + " " + tempY);
 	  	}
 
+	  	// used to assign uids for painting and statues
 	  	function findUid(list, target, x, y) {
 	  		var tempNum = 0;
 	  		var tempLetter = "t";
-	  		console.log(list);
 	  		for (var i = 0; i < list.length; i++) {
 	  			for (var j = 0; j < list[i].length; j++) {
-	  				console.log("uidddd: " + list[i][j].x + " " + list[i][j].y);
-		  			console.log(x);
-		  			console.log(y);
 		  			if (x == list[i][j].x && y == list[i][j].y) {
 		  				tempNum = i;
 		  			}
