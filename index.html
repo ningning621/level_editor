@@ -40,16 +40,19 @@
 		let svgHeight = 900;
 		let svgWidth = 1100;
 		let gameWidth = 1280;
+		// let gameWidth = 1080;
 		let gameHeight = 720;
+		// let gameHeight = 600;
 		let gameTileSize = 30;
 		let numGridWidth = Math.floor(gameWidth/gameTileSize);
-		let numGridHeight = gameHeight/gameTileSize;
+		let numGridHeight = Math.floor(gameHeight/gameTileSize);
 		let tileSize = 25;
 		let selectedToggle = "";
 		let grid = [];
 		let isDragging = false;
 
 		let startingX = (svgWidth - numGridWidth*tileSize)/2;
+		let startingXButton = (svgWidth - 42*tileSize)/2;
 
 		let wallColor = "#A7333F";
 		let doorColor = "#FFB959";
@@ -159,7 +162,7 @@
 
 			// add reset button
 			gridSvg.append("rect")
-				.attr("x", startingX)
+				.attr("x", startingXButton)
 				.attr("y", 20)
 				.attr("width", buttonSize-10)
 				.attr("height", 40)
@@ -170,7 +173,7 @@
 					resetClicked();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+(buttonSize-10)/2)
+				.attr("x", startingXButton+(buttonSize-10)/2)
 				.attr("y", 45)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -182,7 +185,7 @@
 
 			// add export button
 			gridSvg.append("rect")
-				.attr("x", svgWidth-startingX-(buttonSize-10))
+				.attr("x", svgWidth-startingXButton-(buttonSize-10))
 				.attr("y", 80)
 				.attr("width", buttonSize-10)
 				.attr("height", 40)
@@ -193,7 +196,7 @@
 					exportClicked();
 				});
 			gridSvg.append("text")
-				.attr("x", svgWidth-startingX-(buttonSize-10)/2)
+				.attr("x", svgWidth-startingXButton-(buttonSize-10)/2)
 				.attr("y", 105)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -205,7 +208,7 @@
 
 			// add undo button
 			gridSvg.append("rect")
-				.attr("x", startingX)
+				.attr("x", startingXButton)
 				.attr("y", 80)
 				.attr("width", buttonSize-10)
 				.attr("height", 40)
@@ -216,7 +219,7 @@
 					deleteLastItem();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+(buttonSize-10)/2)
+				.attr("x", startingXButton+(buttonSize-10)/2)
 				.attr("y", 105)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -228,7 +231,7 @@
 
 			// show all paths button
 			gridSvg.append("rect")
-				.attr("x", startingX+buttonSize+10)
+				.attr("x", startingXButton+buttonSize+10)
 				.attr("y", 20)
 				.attr("width", buttonSize+20)
 				.attr("height", 40)
@@ -239,7 +242,7 @@
 					showAllThieves();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+buttonSize+10+(buttonSize+20)/2)
+				.attr("x", startingXButton+buttonSize+10+(buttonSize+20)/2)
 				.attr("y", 45)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -251,7 +254,7 @@
 
 			// hide all paths button
 			gridSvg.append("rect")
-				.attr("x", startingX+buttonSize+10)
+				.attr("x", startingXButton+buttonSize+10)
 				.attr("y", 80)
 				.attr("width", buttonSize+20)
 				.attr("height", 40)
@@ -262,7 +265,7 @@
 					hideAllThieves();
 				});
 			gridSvg.append("text")
-				.attr("x", startingX+buttonSize+10+(buttonSize+20)/2)
+				.attr("x", startingXButton+buttonSize+10+(buttonSize+20)/2)
 				.attr("y", 105)
 				.style("text-anchor", "middle")
 				.style("font-family", "Lato")
@@ -391,7 +394,7 @@
 				// show tooltip for statues
 				else if (element.style("fill") == statueRgb) {
 					let offset = document.querySelector("#cell_"+d.x+"_"+d.y).getBoundingClientRect(); 
-		  			let text = "currently assigned " + getThievesByPainting(d.x, d.y, "statue", statueList) + " thieves";
+		  			let text = "assigned " + getThievesByPainting(d.x, d.y, "statue", statueList) + " thieves";
 		  			showToolTip(text, offset.x-35, offset.y-30, 80);
 				}
 			}).on("mouseout", function() {
@@ -516,6 +519,29 @@
 			}
 		}
 
+		function getWallPiece(tempObj) {
+			let lastList = wallList[wallList.length-1];
+
+			if (lastList.length == 1) {
+				return "none";
+			}
+
+			let lastCoord = lastList[lastList.length-2];
+			if (tempObj.y != lastCoord.y) {
+				if (lastList.length == 2) {
+					return "doubleside";
+				} else {
+					return "side";
+				}
+			} else {
+				if (lastList.length == 2) {
+					return "doublefront";
+				} else {
+					return "front";
+				}
+			}
+		}
+
 		function checkDuplicateCoord(list, d) {
 			if (list[list.length-1].length == 0) {
 				return false;
@@ -534,10 +560,10 @@
 
 	  	function dragged(d) {
 	    	d3.select(d).attr("fill", toggleColor[selectedToggle]);
-	    	console.log(d.x + " " + d.y);
 	  	}
 
 	  	function createFinalJson() {
+	  		// console.log(wallList);
 	  		var defaultJson = {
 	  			"version": "1.8.1",
 	  			"level_num": document.getElementById("level_num").value,
@@ -546,7 +572,7 @@
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
-	  			"walls": getFinalValueByColor(wallRgb),
+	  			"walls": getFinalWalls(),
 	  			"doors": getFinalValueByColor(doorRgb),
 	  			"thieves": getFinalThievesList(), 
 	  			"targets": getFinalTargetList(), 
@@ -598,8 +624,208 @@
 	  	// for final json
 	  	function flipYValues(list) {
 	  		return list.map(function(d) {
-	  			return {"x": d.x, "y": numGridHeight-d.y};
+	  			return {"x": d.x, "y": numGridHeight-1-d.y};
 	  		});
+	  	}
+
+	  	// for final json
+	  	function getFinalWalls() {
+	  		let finalList = {};
+			let tempList = [];
+			let columnList = [];
+	  		let frontList = [];
+	  		let sideList = [];
+	  		let iBottomLeftList = [];
+	  		let iBottomRightList = [];
+	  		let iUpperLeftList = [];
+	  		let iUpperRightList = [];
+	  		let iDoubleList = [];
+	  		let oBottomList = [];
+	  		let oLeftCornerList = [];
+	  		let oRightCornerList = [];
+			// get upper wall coord
+	  		for (let i = 1; i < numGridWidth-1; i++) {
+	  			let element = d3.select("#cell_"+i+"_"+0);
+	  			if (element.style("fill") == wallRgb) {
+	  				let t = d3.select("#cell_"+i+"_"+1);
+	  				if (t.style("fill") == wallRgb) {
+	  					iDoubleList.push({"x": i, "y": numGridHeight-1});
+	  				} else {
+	  					tempList.push({"x": i, "y": numGridHeight-1});
+	  				}
+  				}
+	  		}
+	  		finalList["top"] = tempList;
+			tempList = [];
+			// get bottom wall coord
+	  		for (let i = 1; i < numGridWidth-1; i++) {
+	  			let element = d3.select("#cell_"+i+"_"+ (numGridHeight-1));
+	  			if (element.style("fill") == wallRgb) {
+	  				let t = d3.select("#cell_"+i+"_"+(numGridHeight-2));
+	  				if (t.style("fill") == wallRgb) {
+	  					oBottomList.push({"x": i, "y": 0});
+	  				} else {
+	  					tempList.push({"x": i, "y": 0});
+	  				}
+  				}
+	  		}
+	  		finalList["bottom"] = tempList;
+	  		tempList = [];
+
+	  		// get left wall coord (temp fix)
+	  		for (let i = 2; i < numGridHeight-1; i++) {
+	  			let element = d3.select("#cell_"+0+"_"+i);
+	  			if (element.style("fill") == wallRgb) {
+	  				let t = d3.select("#cell_"+1+"_"+i);
+	  				if (t.style("fill") == wallRgb) {
+	  					oLeftCornerList.push({"x": 0, "y": numGridHeight-1-i});
+	  				} else {
+	  					let u = d3.select("#cell_"+0+"_"+(i-1));
+	  					let r = d3.select("#cell_"+1+"_"+(i-1));
+	  					if (isWall(u) && isWall(r)) {
+	  						//temp fix - do not display
+	  					} else {
+		  					tempList.push({"x": 0, "y": numGridHeight-1-i});
+		  				}
+	  				}
+  				}
+	  		}
+	  		finalList["left"] = tempList;
+	  		tempList = [];
+
+	  		// get right wall coord (temp fix)
+	  		for (let i = 2; i < numGridHeight-1; i++) {
+	  			let element = d3.select("#cell_"+(numGridWidth-1)+"_"+i);
+	  			if (element.style("fill") == wallRgb) {
+	  				let t = d3.select("#cell_"+(numGridWidth-2)+"_"+i);
+	  				if (t.style("fill") == wallRgb) {
+	  					oRightCornerList.push({"x": numGridWidth-1, "y": numGridHeight-1-i});
+	  				} else {
+	  					let u = d3.select("#cell_"+(numGridWidth-1)+"_"+(i-1));
+	  					let l = d3.select("#cell_"+(numGridWidth-2)+"_"+(i-1));
+	  					if (isWall(u) && isWall(l)) {
+	  						//temp fix - do not display
+	  					} else {
+		  					tempList.push({"x": numGridWidth-1, "y": numGridHeight-1-i});
+		  				}
+		  			}
+  				}
+	  		}
+	  		finalList["right"] = tempList;
+
+	  		for (let list in wallList) {
+	  			// is a column
+	  			if (wallList[list].length == 4 && isColumn(wallList[list])) {
+	  				columnList.push(getColumnCoord(wallList[list]));
+	  			} else {
+		  			for (let i in wallList[list]) {
+		  				let coord = wallList[list][i];
+		  				let element = d3.select("#cell_"+coord.x+"_"+coord.y);
+
+		  				let eLeft = d3.select("#cell_"+(coord.x-1)+"_"+coord.y);
+		  				let eRight = d3.select("#cell_"+(coord.x+1)+"_"+coord.y);
+		  				let eUp = d3.select("#cell_"+coord.x+"_"+(coord.y-1));
+		  				let eDown = d3.select("#cell_"+coord.x+"_"+(coord.y+1));
+	 
+		  				if (isWall(eLeft) && isWall(eRight) && isWall(eDown)) {
+		  					iDoubleList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eLeft) && isWall(eRight) && isWall(eUp)) {
+		  					frontList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eLeft) && isWall(eUp)) {
+		  					iBottomLeftList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eRight) && isWall(eUp)) {
+		  					iBottomRightList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eLeft) && isWall(eDown)) {
+		  					iUpperLeftList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eRight) && isWall(eDown)) {
+		  					iUpperRightList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else if (isWall(eLeft) || isWall(eRight)) {
+		  					frontList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				} else {
+		  					sideList.push({"x": coord.x, "y": numGridHeight-1-coord.y});
+		  				}
+		  			}
+	  			}
+	  		}
+
+	  		finalList["front"] = frontList;
+	  		finalList["side"] = sideList;
+	  		finalList["ibc_left"] = iBottomLeftList;
+	  		finalList["ibc_right"] = iBottomRightList;
+	  		finalList["idouble"] = iDoubleList;
+	  		finalList["iuc_left"] = iUpperLeftList;
+	  		finalList["iuc_right"] = iUpperRightList;
+	  		finalList["column"] = columnList;
+	  		finalList["obc"] = oBottomList;
+	  		finalList["olc"] = oLeftCornerList;
+	  		finalList["orc"] = oRightCornerList;
+
+	  		//check corners
+	  		tempList = [];
+	  		element = d3.select("#cell_"+0+"_"+0);
+	  		if (element.style("fill") == wallRgb) {
+	  			tempList.push({"x": 0, "y": numGridHeight-1});
+	  		}
+	  		element = d3.select("#cell_"+0+"_"+(numGridHeight-1));
+	  		if (element.style("fill") == wallRgb) {
+	  			tempList.push({"x": 0, "y": 0});
+	  		}
+
+	  		element = d3.select("#cell_"+(numGridWidth-1)+"_"+(numGridHeight-1));
+	  		if (element.style("fill") == wallRgb) {
+	  			tempList.push({"x": numGridWidth-1, "y": 0});
+	  		}
+	  		element = d3.select("#cell_"+(numGridWidth-1)+"_"+0);
+	  		if (element.style("fill") == wallRgb) {
+	  			tempList.push({"x": numGridWidth-1, "y": numGridHeight-1});
+	  		}
+
+	  		finalList["corners"] = tempList;
+	  		return finalList;
+	  	}
+
+	  	function isWall(element) {
+	  		return element.style("fill") == wallRgb;
+	  	}
+
+	  	function isColumn(list) {
+	  		let minX = 100;
+	  		let maxX = 0;
+	  		let minY = 100;
+	  		let maxY =  0;
+console.log("enter");
+	  		for (let i = 0; i < list.length-1; i++) {
+	  			let coord = list[i];
+	  			console.log(coord);
+	  			if (coord.x > maxX) { maxX = coord.x; }
+	  			if (coord.y > maxY) { maxY = coord.y; }
+	  			if (coord.x < minX) { minX = coord.x; }
+	  			if (coord.y < minY) { minY = coord.y; }
+
+	  			console.log("testing");
+	  		}
+
+	  		console.log("testing")
+	  		console.log(maxX - minX);
+	  		console.log(maxY - minY);
+	  		return (maxX - minX == 1) && (maxY - minY == 1);
+	  	}
+
+	  	function getColumnCoord(list) {
+	  		let minX = 100;
+	  		let maxX = 0;
+	  		let minY = 100;
+	  		let maxY =  0;
+
+	  		for (let i = 0; i < list.length -1; i++) {
+	  			let coord = list[i];
+	  			if (coord.x > maxX) { maxX = coord.x; }
+	  			if (coord.y > maxY) { maxY = coord.y; }
+	  			if (coord.x < minX) { minX = coord.x; }
+	  			if (coord.y < minY) { minY = coord.y; }
+	  		}
+
+	  		return {"x": minX, "y": numGridHeight-1-maxY};
 	  	}
 
 	  	// for final json
@@ -610,7 +836,7 @@
 	  				let element = d3.select("#cell_"+i+"_"+j);
 
 	  				if (element.style("fill") == rgb) {
-	  					tempList.push({"x": i, "y": numGridHeight-j});
+	  					tempList.push({"x": i, "y": numGridHeight-1-j});
 	  				} 
 	  			}
 	  		}
@@ -814,7 +1040,7 @@
 			}
 	  	}
 
-	  	function drawBlackBorder(gridSvg, x, y) {
+	  	function drawBlackBorder(gridSvg, x, y, numRight = 1, numDown = 1) {
 	  		var tempX = startingX+tileSize*Number(x);
 			var tempY = 150+tileSize*Number(y);
 
@@ -825,23 +1051,30 @@
 				.style("stroke-width", 2)
 				.style("fill", "none")
 				.attr("d", "M" + tempX + " " + tempY 
-					+ "L" + (tempX+tileSize) + " "+ tempY 
-					+ "L" + (tempX+tileSize) + " " + (tempY+tileSize)
-					+ "L" + (tempX) + " " + (tempY+tileSize)
+					+ "L" + (tempX+tileSize*numRight) + " "+ tempY 
+					+ "L" + (tempX+tileSize*numRight) + " " + (tempY+tileSize*numDown)
+					+ "L" + (tempX) + " " + (tempY+tileSize*numDown)
 					+ "L" + tempX + " " + tempY);
+	  	}
+
+	  	function getTargetByIndex(list, x, y) {
+	  		var num = -1;
+
+	  		for (var i = 0; i < list.length; i++) {
+	  			for (var j = 0; j < list[i].length; j++) {
+		  			if (x == list[i][j].x && y == list[i][j].y) {
+		  				num = i;
+		  			}
+	  			} 
+	  		}
+
+	  		return num;
 	  	}
 
 	  	// used to assign uids for painting and statues
 	  	function findUid(list, target, x, y) {
-	  		var tempNum = 0;
+	  		var tempNum = getTargetByIndex(list, x, y);
 	  		var tempLetter = "t";
-	  		for (var i = 0; i < list.length; i++) {
-	  			for (var j = 0; j < list[i].length; j++) {
-		  			if (x == list[i][j].x && y == list[i][j].y) {
-		  				tempNum = i;
-		  			}
-	  			} 
-	  		}
 
 	  		if (target == "painting") {
 	  			tempLetter = "p";
@@ -854,7 +1087,6 @@
 
 	  	function changeDraggingText() {
 	  		let text = isDragging ? "ON" : "OFF";
-	  		console.log(document.getElementById("drag_bool"));
 			document.getElementById("drag_bool").innerHTML = "dragging is " + text.bold();
 	  	}
 
