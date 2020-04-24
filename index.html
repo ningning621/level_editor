@@ -9,18 +9,18 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.8.4) </h3>
+	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.8.5) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
 	</div>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60px">
 		<label style="margin-right: 20px;" for="width">Width: </label>
-		<input value="1280" style="border-radius: 10px" type="number" id="width"><br><br>
+		<input value="1080" style="border-radius: 10px" type="number" id="width"><br><br>
 		<label style="margin-left: 40px; margin-right: 20px;" for="height">Height: </label>
-		<input value="720" style="border-radius: 10px" type="number" id="height"><br><br>
+		<input value="600" style="border-radius: 10px" type="number" id="height"><br><br>
 		<label style="margin-left: 40px; margin-right: 20px;" for="tile">Tile Size: </label>
-		<input value="30" style="border-radius: 10px" type="number" id="tile"><br><br>
+		<input value="40" style="border-radius: 10px" type="number" id="tile"><br><br>
 	</div>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60; margin-bottom: 60">
 		<label style="margin-right: 20px;" for="guards">Num of Guards: </label>
@@ -39,11 +39,11 @@
 
 		let svgHeight = 900;
 		let svgWidth = 1100;
-		let gameWidth = 1280;
-		// let gameWidth = 1080;
-		let gameHeight = 720;
-		// let gameHeight = 600;
-		let gameTileSize = 30;
+		// let gameWidth = 1280;
+		let gameWidth = 1080;
+		// let gameHeight = 720;
+		let gameHeight = 600;
+		let gameTileSize = 40;
 		let numGridWidth = Math.floor(gameWidth/gameTileSize);
 		let numGridHeight = Math.floor(gameHeight/gameTileSize);
 		let tileSize = 25;
@@ -565,7 +565,7 @@
 	  	function createFinalJson() {
 	  		// console.log(wallList);
 	  		var defaultJson = {
-	  			"version": "1.8.4",
+	  			"version": "1.8.5",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
