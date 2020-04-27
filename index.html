@@ -9,10 +9,19 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.8.5) </h3>
+	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.9) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
+		<label style="margin-left: 40px; margin-right: 20px;" for="difficulty">Difficulty: </label>
+		<input value="4" style="border-radius: 10px" type="number" id="difficulty"><br><br>
+		<label for="theme" style="margin-left: 40px; margin-right: 20px;">Theme:</label>
+		<select id="theme">
+		  <option value="comtemp">Comtemporary</option>
+		  <option value="ea">East Asian</option>
+		  <option value="ren">Renaissance</option>
+		  <option value="scand">Scandinavian</option>
+		</select>
 	</div>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 60px">
 		<label style="margin-right: 20px;" for="width">Width: </label>
@@ -565,13 +574,15 @@
 	  	function createFinalJson() {
 	  		// console.log(wallList);
 	  		var defaultJson = {
-	  			"version": "1.8.5",
+	  			"version": "1.9",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
 	  			"width": numGridWidth,
 	  			"height": numGridHeight, 
 	  			"tileSize": gameTileSize,
+	  			"difficulty": document.getElementById("difficulty").value,
+	  			"theme": document.getElementById("theme").value,
 	  			"walls": getFinalWalls(),
 	  			"doors": getFinalValueByColor(doorRgb),
 	  			"thieves": getFinalThievesList(), 
@@ -592,7 +603,8 @@
 	  			tempList.push({
 	  				"type": "painting", 
 	  				"uid": "p" + i,
-	  				"location": flipYValues(paintingList[i])
+	  				"location": flipYValues(paintingList[i]),
+	  				"direction": getDirectionForPainting(paintingList[i])
 	  			});
 	  		}
 
@@ -605,6 +617,29 @@
 	  		}
 
 	  		return tempList;
+	  	}
+
+	  	function getDirectionForPainting(list) {
+	  		var element;
+	  		//horizontal
+	  		if (list[0].y == list[1].y) {
+	  			element = d3.select("#cell_"+list[0].x+"_"+(list[0].y -1));
+	  			if (isWall(element)) {
+	  				return "top";
+	  			} else {
+	  				return "bottom";
+	  			}
+	  		} 
+
+	  		//vertical
+	  		else {
+				element = d3.select("#cell_"+(list[0].x - 1)+"_"+(list[0].y));
+				if (isWall(element)) {
+	  				return "left";
+	  			} else {
+	  				return "right";
+	  			}
+	  		}
 	  	}
 
 	  	// for final json
