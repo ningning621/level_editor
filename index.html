@@ -631,8 +631,8 @@
 	  				var elementLeft = d3.select("#cell_"+(minX-1)+"_"+(list[0].y-1));
 	  				var elementRight = d3.select("#cell_"+(maxX+1)+"_"+(list[1].y-1));
 
-	  				if (!isWall(elementLeft)) return "top-shiftright";
-	  				if (!isWall(elementRight)) return "top-shiftleft";
+	  				if (!isWall(elementLeft)) return "top-sr";
+	  				if (!isWall(elementRight)) return "top-sl";
 	  				return "top";
 	  			} else {
 	  				var minX = (list[0].x > list[1].x) ? list[1].x : list[0].x;
@@ -641,8 +641,8 @@
 	  				var elementLeft = d3.select("#cell_"+(minX-1)+"_"+(list[0].y+1));
 	  				var elementRight = d3.select("#cell_"+(maxX+1)+"_"+(list[1].y+1));
 
-	  				if (!isWall(elementLeft)) return "bottom-shiftright";
-	  				if (!isWall(elementRight)) return "bottom-shiftleft";
+	  				if (!isWall(elementLeft)) return "bottom-sr";
+	  				if (!isWall(elementRight)) return "bottom-sl";
 	  				return "bottom";
 	  			}
 	  		} 
