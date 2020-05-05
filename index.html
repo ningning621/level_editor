@@ -9,7 +9,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:200,200i&display=swap" rel="stylesheet">
 </head>
 <body bgcolor="#f8f8f8" style="text-align: center;">
-	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.9) </h3>
+	<h3 style="font-family: Montserrat;">The Night Watch Level Editor (verson 1.9.1) </h3>
 	<div style="font-family: Lato; display:flex; justify-content: center; margin-top: 50; margin-bottom: 50">
 		<label style="margin-right: 20px;" for="level_num">Level Number: </label>
 		<input value="0" style="border-radius: 10px" type="number" id="level_num"><br><br>
@@ -17,7 +17,7 @@
 		<input value="4" style="border-radius: 10px" type="number" id="difficulty"><br><br>
 		<label for="theme" style="margin-left: 40px; margin-right: 20px;">Theme:</label>
 		<select id="theme">
-		  <option value="contemp">Comtemporary</option>
+		  <option value="contemp">Contemporary</option>
 		  <option value="ea">East Asian</option>
 		  <option value="ren">Renaissance</option>
 		  <option value="scand">Scandinavian</option>
@@ -574,7 +574,7 @@
 	  	function createFinalJson() {
 	  		// console.log(wallList);
 	  		var defaultJson = {
-	  			"version": "1.9",
+	  			"version": "1.9.1",
 	  			"level_num": document.getElementById("level_num").value,
 	  			"canvasWidth": gameWidth,
 	  			"canvasHeight": gameHeight,
@@ -625,8 +625,20 @@
 	  		if (list[0].y == list[1].y) {
 	  			element = d3.select("#cell_"+list[0].x+"_"+(list[0].y -1));
 	  			if (isWall(element)) {
+	  				var element1 = d3.select("#cell_"+list[0].x+"_"+(list[0].y -2));
+	  				var element2 = d3.select("#cell_"+list[1].x+"_"+(list[1].y -2));
+
+	  				if (isWall(element1) || isWall(element2)) {
+	  					return "top-edge";
+	  				}
 	  				return "top";
 	  			} else {
+	  				var element1 = d3.select("#cell_"+list[0].x+"_"+(list[0].y+2));
+	  				var element2 = d3.select("#cell_"+list[1].x+"_"+(list[1].y+2));
+
+	  				if (isWall(element1) || isWall(element2)) {
+	  					return "bottom-edge";
+	  				}
 	  				return "bottom";
 	  			}
 	  		} 
