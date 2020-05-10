@@ -735,15 +735,15 @@
 	  					let u = d3.select("#cell_"+0+"_"+(i-1));
 	  					let r = d3.select("#cell_"+1+"_"+(i-1));
 	  					let d = d3.select("#cell_"+0+"_"+(i+1));
-	  					if (isWall(u) && isWall(r)) {
-	  						//temp fix - do not display
-	  					} 
+	  					// if (isWall(u) && isWall(r)) {
+	  					// 	//temp fix - do not display
+	  					// } 
 	  					// else if (isWall(u) && !isWall(r) && !isWall(d)) {
 	  					// 	edgeList.push({"x": 0, "y": numGridHeight-1-i});
 	  					// } 
-	  					else {
+	  					// else {
 		  					tempList.push({"x": 0, "y": numGridHeight-1-i});
-		  				}
+		  				// }
 	  				}
   				}
 	  		}
@@ -761,16 +761,16 @@
 	  					let u = d3.select("#cell_"+(numGridWidth-1)+"_"+(i-1));
 	  					let l = d3.select("#cell_"+(numGridWidth-2)+"_"+(i-1));
 	  					let d = d3.select("#cell_"+(numGridWidth-1)+"_"+(i+1));
-	  					if (isWall(u) && isWall(l)) {
-	  						//temp fix - do not display
-	  					} 
+	  					// if (isWall(u) && isWall(l)) {
+	  					// 	//temp fix - do not display
+	  					// } 
 	  					// else if (isWall(u) && !isWall(l) && !isWall(d)) {
 	  					// 	console.log("testingggg");
 	  					// 	edgeList.push({"x": numGridWidth-1, "y": numGridHeight-1-i});
 	  					// } 
-	  					else {
+	  					// else {
 		  					tempList.push({"x": numGridWidth-1, "y": numGridHeight-1-i});
-		  				}
+		  				// }
 		  			}
   				}
 	  		}
